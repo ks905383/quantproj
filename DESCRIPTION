@@ -1,0 +1,33 @@
+Package: quantproj
+Type: Package
+Title: Project Climate Data Based on Changes in Distribution Shape
+Version: 0.9.7
+Author: Kevin Schwarzwald
+Maintainer: Kevin Schwarzwald <kschwarzwald@uchicago.edu>
+Description: Project climate time series into the future based on 
+    estimated distributional changes of a different set of climate 
+    time series, potentially spanning multiple runs over the same 
+    time frame, based on the quantile mapping methodology for 
+    multi-member climate ensembles developed by Haugen et al. (2018). 
+    In its most common use, it allows for a weather or reanalysis
+    variable (i.e. near-surface air temperature) to be projected
+    by the estimated change in distribution shape of a large model
+    ensemble, such as CESM-LE. This gives a future time series 
+    reflecting the estimated distributional change in the model. 
+    Code is built off of and based on code by Matz Haugen (original
+    found here: https://github.com/matzhaugen/future-climate-emulations-analysis) 
+    and is used with permission. 
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    ncdf4,
+    quantreg,
+    splines,
+    pbs,
+    quantreg,
+    tictoc,
+    rlist,
+    abind,
+    xts
+RoxygenNote: 6.0.1
