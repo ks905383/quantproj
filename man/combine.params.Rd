@@ -16,6 +16,6 @@ a merged file containing all calculated regression coefficients in a
 }
 \description{
 Concatenate the individual parameter files calculated through separate calls
-to \code{estimate.quantiles} into a single file, removing duplicates along the
-way. This is only really necessary for \code{get.quantile.changes}.
+to \code{\link{estimate.quantiles}} into a single file, removing duplicates along the
+way. This is only really necessary for \code{\link{get.quantile.changes}}.
 }

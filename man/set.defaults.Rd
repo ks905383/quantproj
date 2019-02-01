@@ -4,16 +4,20 @@
 \alias{set.defaults}
 \title{Set default inputs for quantile mapping}
 \usage{
-set.defaults(aux.dir = "aux/", base.data.dir = "base_data/",
-  mod.data.dir = "model_data/", filevar = "tas", mod.name = "LENS",
-  base.name = "ERA-INTERIM", base.year.range = c(1979, 2010),
-  mod.year.range = c(1979, 2099), proj.year.range = c(2011, 2099),
+set.defaults(aux.dir = paste0(getwd(), "/aux/"),
+  base.data.dir = paste0(getwd(), "/base_data/"),
+  mod.data.dir = paste0(getwd(), "/model_data/"), filevar = "tas",
+  mod.name = "LENS", base.name = "ERA-INTERIM", base.year.range = c(1979,
+  2010), mod.year.range = c(1979, 2099), proj.year.range = c(2011, 2099),
   q_norm = c(0.1, 0.5, 0.9), norm.x.df = c(14, 6, 3),
   base.norm.x.df = c(10, 1, 0), get.volc = F, q_bulk = c(0.1, 0.18, 0.25,
   0.35, 0.42, 0.5, 0.58, 0.65, 0.75, 0.82, 0.9), bulk.x.df = c(14, 6, 3),
   q_tail = c(0.01, 0.1, 0.25, 0.5, 0.75), tail.x.df = c(3, 1, 0),
   index.type = "resampling_rep", resampling.timescale = "year",
-  bootstrapping = F, nboots = 50, block.size = 40)
+  bootstrapping = F, nboots = 50, block.size = 40, varnames = list(lon =
+  c("lon", "longitude", "Longitude", "longitude_1"), lat = c("lat", "latitude",
+  "Latititude", "latitude_1"), time = c("time"), run = c("run"), loc =
+  c("global_loc", "loc", "location", "lonlat")), search.str = character())
 }
 \arguments{
 \item{aux.dir}{directory for auxiliary files - saved basis functions, etc.}
@@ -47,6 +51,16 @@ set.defaults(aux.dir = "aux/", base.data.dir = "base_data/",
 \item{nboots}{number of bootstrap runs (def: \code{50})}
 
 \item{block.size}{bootstrap block size (def: \code{40}) (ACROSS RUNS - SO 20 means each bootstrap block is across 20 randomly chosen runs)}
+
+\item{varnames}{a list with each element giving the possible names for the 
+variable with the same name as the list element. For example, the list 
+element \code{lat=c("lat","latitude","Latititude","latitude_1")} makes 
+it so that the latitude variable in the NetCDF files loaded through 
+\code{\link{get.ncdf}} can be named any of those names without the code 
+running into trouble.}
+
+\item{search.str}{a search string used to look for the source NetCDF files 
+(def: "\code{[filevar]_day_.*nc}", with \code{[filevar]} set above)}
 
 \item{freq}{data frequency shorthand (CMIP5 syntax, def: \code{"day"} for daily)}
 }

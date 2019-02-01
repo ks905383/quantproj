@@ -76,8 +76,6 @@
 #'
 #' @return Nothing. Output is saved instead.
 
-# MODEL NAMES - don't stick a '_' or '.' in your model name plz
-
 build.projection <- function(defaults,log=T,
 							   max.runtime=4*60*60,assumed.avg.processing.time=5) {
 
@@ -213,9 +211,9 @@ build.projection <- function(defaults,log=T,
 
 							# ----- SETUP ----------------------------------------------------
 							cat("\n")
-							print(paste0("Beginning processing for pixels with lat=",process.inputs.tmp$lat,
+							cat(paste0("Beginning processing for pixels with lat=",process.inputs.tmp$lat,
 								" in region ",process.inputs.tmp$reg," (global locations ",process.inputs.tmp$global_loc[1],"-",
-								process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")"))
+								process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")"),fill=TRUE)
 
 							# Get file year range (from position in filename, FILENAME MUST
 							# BE IN CMIP5 STANDARD BY YEAR, but can be either YYYYMMDD or YYYY)
@@ -270,43 +268,13 @@ build.projection <- function(defaults,log=T,
 						    # This gets the raw data form the netcdf, permutes it so the time dimension is first,
 							# then cbinds along the "runs" dimension to get a single time series for each point
 							# (a [nyear*365*nruns x npoints] array)
-							ncdata <- nc_open(paste0(defaults$base.data.dir,process.inputs.tmp$fn_base))
-							if (length(process.inputs.tmp$local_idxs_base)==1) {
-								Raw <- ncvar_get(ncdata,varid=defaults$filevar,
-														start=c(process.inputs.tmp$local_idxs_base[1],(defaults$base.year.range[1]-fn.year.range[1])*365+1),
-														count=c(length(process.inputs.tmp$local_idxs_base),(defaults$base.year.range[2]-defaults$base.year.range[1]+1)*365))
-							} else {
-								Raw <- apply(aperm(ncvar_get(ncdata,varid=defaults$filevar,
-															start=c(process.inputs.tmp$local_idxs_base[1],(defaults$base.year.range[1]-fn.year.range[1])*365+1),
-															count=c(length(process.inputs.tmp$local_idxs_base),(defaults$base.year.range[2]-defaults$base.year.range[1]+1)*365)),
-													c(2,1)),
-												2,cbind)
-							}
-							lat <- ncvar_get(ncdata,"lat",start=process.inputs.tmp$local_idxs_base[1],count=length(process.inputs.tmp$local_idxs_base))
-							lon <- ncvar_get(ncdata,"lon",start=process.inputs.tmp$local_idxs_base[1],count=length(process.inputs.tmp$local_idxs_base))
-							nc_close(ncdata);rm(ncdata)
+							Raw <- get.ncdf(defaults,process.inputs.tmp,year.range=defaults$base.year.range)
 
 							# Raw needs to be an xts object for stupid reasons
 							t.out <- do.call("c",lapply(defaults$base.year.range[1]:defaults$base.year.range[2],
 								function(yr) {timeBasedSeq(paste0(yr,'/',yr,'/d'))}))
 				     		t.out <- t.out[strftime(t.out,format="%j")!='366'] #(removing leap years)
-							Raw <- xts(Raw,order.by=t.out)
-
-							# Make into list (the [if] is because it otherwise breaks
-							# for 1-D vectors since they're stored explicitly as 1-D
-							# in R instead of 2-D with a singleton)
-							raw.list <- list()
-							if (length(lon)>1) {
-								for (x in seq(1,length(lon))) {
-									raw.list[[x]] <- list(Raw=Raw[,x],lat=lat[x],lon=lon[x],params=params[[x]])
-								}
-								rm(x)
-							} else {
-								raw.list[[1]] <- list(Raw=Raw,lat=lat,lon=lon,params=params[[1]])
-							}
-							Raw <- raw.list
-							rm(raw.list)
-
+				     		Raw <- lapply(Raw,function(R) R$Raw <- xts(R$Raw,order.by=t.out))
 
 							# Repeat time series out for each element
 							if (defaults$bootstrapping) {
@@ -331,9 +299,9 @@ build.projection <- function(defaults,log=T,
 							output.map <- lapply(Raw,function(input.list) {
 								cat("\n") #Insert newlines to add space between messages of different processing chunks
 								if (defaults$bootstrapping) {
-									print(paste0("processing lon = ",input.list$lon,", run ",input.list$params$run.idx))
+									cat(paste0("processing lon = ",input.list$lon,", run ",input.list$params$run.idx),fill=TRUE)
 								} else {
-									print(paste0("processing lon = ",input.list$lon))
+									cat(paste0("processing lon = ",input.list$lon),fill=TRUE)
 								}
 
 								project.climate(defaults,input.list$params,base.data=input.list$Raw,
@@ -364,18 +332,18 @@ build.projection <- function(defaults,log=T,
 
 							# Save output
 							save(file=output.fn,output.map)
-							print(paste0(defaults$base.name," projection complete and saved for pixels with lat=",process.inputs.tmp$lat,
+							cat(paste0(defaults$base.name," projection complete and saved for pixels with lat=",process.inputs.tmp$lat,
 								" in region ",process.inputs.tmp$reg," (global locations ",process.inputs.tmp$global_loc[1],"-",
-								process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")!"))
+								process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")!"),fill=TRUE)
 							cat("\n")
 
 						},error=function(e) {
 							print(e)
 							# Remove the temporary file if the run has an error
 							file.remove(output.fn)
-							print(paste0("Error occured on the ",defaults$base.name," projection run for pixels with lat=",process.inputs.tmp$lat,
+							cat(paste0("Error occured on the ",defaults$base.name," projection run for pixels with lat=",process.inputs.tmp$lat,
 								" in region ",process.inputs.tmp$reg," (global locations ",process.inputs.tmp$global_loc[1],"-",
-								process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")!"))
+								process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")!"),fill=TRUE)
 							cat("\n")
 						})
 
@@ -384,17 +352,14 @@ build.projection <- function(defaults,log=T,
 							" due to set server time limits."))
 					}
 				} else {
-					print(paste0(output.fn," already exists; skipping."))
-					cat("\n")
+					cat(paste0(output.fn," already exists; skipping.\n"),fill=TRUE)
 				}
 			} else {
-				print(paste0("No quantile fit parameters found for global locations ",process.inputs.tmp$global_loc[1],"-",
-						process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)]," (searched for file: ",load.fn,"); skipping."))
-				cat("\n")
+				cat(paste0("No quantile fit parameters found for global locations ",process.inputs.tmp$global_loc[1],"-",
+						process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)]," (searched for file: ",load.fn,"); skipping.\n"),fill=TRUE)
 			}
 		} else {
-			print(paste0("The pixels for the quantile fit parameters in ",process.inputs.tmp$fn," could not be matched with a base data process chunk; skipping."))
-			cat("\n")
+			cat(paste0("The pixels for the quantile fit parameters in ",process.inputs.tmp$fn," could not be matched with a base data process chunk; skipping.\n"),fill=TRUE)
 		}
 
 		# Return nothing
@@ -415,10 +380,3 @@ build.projection <- function(defaults,log=T,
 	# Don't return anything...
 	invisible()
 }
-
-
-
-#if (length(process.inputs.tmp$local_idxs)==1) { #<----- I DON'T KNOW WHY THIS WOULDN'T BE COVERED BY THE LENGTH(LAT) BELOW. PLEASE TEST FURTHER.
-#								raw.list <- list()
-#								raw.list[[1]] <- list(Raw=Raw,lat=lat,lon=lon,params=params[[1]])
-#							} else {

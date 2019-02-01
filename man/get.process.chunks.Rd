@@ -4,7 +4,8 @@
 \alias{get.process.chunks}
 \title{Get File Information to Allow Processing of Subsets}
 \usage{
-get.process.chunks(defaults, save.output = FALSE, search.dir = character())
+get.process.chunks(defaults, save.output = FALSE, search.dir = character(),
+  show.messages = TRUE)
 }
 \arguments{
 \item{defaults}{the output from \code{\link{set.defaults}}. The defaults used
@@ -18,6 +19,9 @@ search directory (as "\code{process_inputs.RData}"), by default
 \item{search.dir}{by default, \code{get.process.chunks} searches in the
 \code{mod.data.dir} in \code{defaults}. If a different directory should be
 examined, use this to set the path.}
+
+\item{show.messages}{whether to show some useful descriptions of the search
+procedure (by default \code{TRUE})}
 }
 \value{
 a list giving, for each region-by-latitude chunk the subset suffix
@@ -26,30 +30,39 @@ a list giving, for each region-by-latitude chunk the subset suffix
   and \code{lon}), the global pixel id (the variable \code{global_loc} if it
   exists in the \emph{NetCDF} file, otherwise a new one is created, counting
   pixels up by files alphabetically), the local id (\code{local_idxs}) linear
-  index within the file of each pixel), and the number of experiment runs in
-  the file (the variable \code{run} in the \emph{NetCDF} file; 1 otherwise).
+  index within the file of each pixel), the number of experiment runs in
+  the file (the variable \code{run} in the \emph{NetCDF} file; 1 otherwise), 
+	 and the within-file indices along each location dimension (either just 
+ location or lon x lat) \code{dim_idxs}.
 }
 \description{
 Get information about the climate data files in a folder,
 and split them up by region-by-latitude chunk to allow for
 processing subsections of the (very large) files at a time.
 }
-\section{Expected file structure}{
+\section{Expected File Structure}{
 
- \code{get.process.chunks} and the \code{quantproj} packages as a whole
- expect the climate data to follow a few conventions:
+ In general, most common forms of climate file structures are supported, 
+	especially the CMIP5 structure. Variables can either be on a \code{lon x lat} 
+grid or stored by linear location. Files can either contain all runs of a model
+	or can be saved by run. Files can either contain the whole timeframe of a model
+run or be split up in consecutive temporal chunks. Furthermore:
  \describe{
    \item{filename}{the code searches for \emph{NetCDF} files using the search
-     string "\code{[defaults$filevar]_day_.*nc}". Make sure no other NetCDF
+     string "\code{[defaults$filevar]_day_.*nc}" (by default; this can be 
+	changed by setting \code{defaults$search.str}). Make sure no other NetCDF
      files with that pattern are present in the search directory (by default
      \code{defaults$mod.data.dir}).}
-   \item{variable setup}{Currently, the code expects the primary variable to
-     be a \code{[loc x time (x run)]} \emph{2-dimensional} variable named
-     \code{defaults$filevar}. Future versions will support \code{[lon x lat x
-     time (x run)]} grids as well. }
+   \item{variable setup}{Currently, the code expects the primary variable to 
+		have either a location dimension (giving the linear index of a location),
+	or a lon x lat grid. These are all identified by name - the search terms
+		used can be set in \code{efaults$varnames} - out-of-the-box, the package 
+	for example supports "lat", "latitude", "Latitude", and "latitude_1" as 
+	possible names for the "lat" dimension.}
    \item{locations}{The code expects there to be two location variables,
      \code{lat} and \code{lon} (CMIP5 syntax), giving the lat/lon location of
-      every pixel in the file}
+      every pixel in the file. The names of those variables can be any of the
+		 alternatives given by \code{defaults$varnames}.}
    \item{multiple runs}{If there are multiple runs in the file, there should
      be a \code{run} variable/dimension in the file giving the run id as an
      integer}

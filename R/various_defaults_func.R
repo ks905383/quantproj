@@ -57,6 +57,16 @@
 #' @param nboots number of bootstrap runs (def: \code{50})
 #' @param block.size bootstrap block size (def: \code{40}) (ACROSS RUNS - SO 20 means each bootstrap block is across 20 randomly chosen runs)
 #'
+#' @param varnames a list with each element giving the possible names for the 
+#'		variable with the same name as the list element. For example, the list 
+#'		element \code{lat=c("lat","latitude","Latititude","latitude_1")} makes 
+#'		it so that the latitude variable in the NetCDF files loaded through 
+#'		\code{\link{get.ncdf}} can be named any of those names without the code 
+#'		running into trouble. 
+#' @param search.str a search string used to look for the source NetCDF files 
+#'		(def: "\code{[filevar]_day_.*nc}", with \code{[filevar]} set above)
+#'		
+#'
 #' @return a list object containing all of the parameters listed above, to be used
 #'  as an input in thd other functions in this package.
 
@@ -64,11 +74,11 @@
 set.defaults <- function(
 #----- FILE PATHS -----
 # The directory in which code is stored
-aux.dir="aux/",
+aux.dir=paste0(getwd(),"/aux/"),
 # The directory with weather data to be projected
-base.data.dir="base_data/",
+base.data.dir=paste0(getwd(),"/base_data/"),
 # The directory with raw model ensemble data
-mod.data.dir="model_data/",
+mod.data.dir=paste0(getwd(),"/model_data/"),
 
 #----- VARIABLE -----
 # Variable shorthand (use CMIP5)
@@ -121,7 +131,15 @@ resampling.timescale="year",
 #------ BOOTSTRAPPING -----
 bootstrapping=F,
 nboots=50,
-block.size=40
+block.size=40,
+
+#----- FILENAME/VARNAME ISSUES -----
+varnames=list(lon=c("lon","longitude","Longitude","longitude_1"),
+			  lat=c("lat","latitude","Latititude","latitude_1"),
+			  time=c("time"),
+			  run=c("run"),
+			  loc=c("global_loc","loc","location","lonlat")),
+search.str=character()
 ) {
 
 	# Warning if the years don't overlap.
@@ -132,19 +150,42 @@ block.size=40
 						paste0(base.year.range,collapse='-'),'), please reconsider.'))
 	}
 
+	# Set filename search string
+	if (length(search.str)==0) {
+		search.str <- paste0(filevar,"_day_.*nc")
+	}
+
+	# Throw a warning if the model name contains a . or a /
+	if (grepl("\\.|\\_",mod.name)) {
+		warning(paste0("The name of the projecting model (ensemble), ",
+			mod.name,
+			" contains a '.' or a '/'. Please avoid this (yes, rename your files if you have to), since it tends to mess up the file identification procedures."))
+	}
+	if (grepl("\\.|\\_",base.name)) {
+		warning(paste0("The name of the base dataset/model, ",
+			base.name,
+			" contains a '.' or a '/'. Please avoid this (yes, rename your files if you have to), since it tends to mess up the file identification procedures."))
+	}
+
 	# Create directories if they don't yet exist ---------
 	# Auxiliary directory and subdirectories
-	if (!dir.exists(aux.dir)) {dir.create(aux.dir); print(paste0(aux.dir," created for auxiliary files!"))}
-	if (!dir.exists(paste0(aux.dir,"bases/"))) {dir.create(paste0(aux.dir,"bases/")); print(paste0(aux.dir,"bases/","created for predictor basis files!"))}
-	if (!dir.exists(paste0(aux.dir,"run_logs/"))) {dir.create(paste0(aux.dir,"run_logs/")); print(paste0(aux.dir,"run_logs/ created for run logs!"))}
+	if (!dir.exists(aux.dir)) {dir.create(aux.dir); cat(paste0("\n",aux.dir," created for auxiliary files!"),fill=T)} else {cat(paste0("\n",aux.dir," set as location of auxiliary files!"),fill=T)}
+	if (!dir.exists(paste0(aux.dir,"bases/"))) {dir.create(paste0(aux.dir,"bases/")); cat(paste0(aux.dir,"bases/","created for predictor basis files!"),fill=T)} else {cat(paste0(aux.dir,"bases/ set as location of predictor basis files!"),fill=T)}
+	if (!dir.exists(paste0(aux.dir,"run_logs/"))) {dir.create(paste0(aux.dir,"run_logs/")); cat(paste0(aux.dir,"run_logs/ created for run logs!"),fill=T)} else {cat(paste0(aux.dir,"run_logs/ set as location of run logs!"),fill=T)}
 
-	# Bsse data directory
-	if (!dir.exists(base.data.dir)) {dir.create(base.data.dir); print(paste0(base.data.dir," created for data to be projected!"))}
-	if (!dir.exists(paste0(base.data.dir,"output/"))) {dir.create(paste0(base.data.dir,"output/")); print(paste0(base.data.dir,"output/ created for projected data!"))}
+	# Base data directory
+	if (!dir.exists(base.data.dir)) {dir.create(base.data.dir); cat(paste0("\n",base.data.dir," created for data to be projected! Please make sure the only files in here that match the search string '",search.str,"' are the base data files you want to project."),fill=T)
+	} else {
+		cat(paste0("\n",base.data.dir," set as location of the data to be projected! Please make sure the only files in here that match the search string '",search.str,"' are the base data files you want to project."),fill=T)
+	}
+	if (!dir.exists(paste0(base.data.dir,"output/"))) {dir.create(paste0(base.data.dir,"output/")); cat(paste0(base.data.dir,"output/ created for the outputted, projected data!"),fill=T)} else {cat(paste0(base.data.dir,"output/ set as location for the outputted, projected data!"),fill=T)}
 
 	# Model/projecting data directory
-	if (!dir.exists(mod.data.dir)) {dir.create(mod.data.dir); print(paste0(mod.data.dir," created for projecting data!"))}
-	if (!dir.exists(paste0(mod.data.dir,"params/"))) {dir.create(paste0(mod.data.dir,"params/")); print(paste0(mod.data.dir,"params/ created for projecting data quantile fits!"))}
+	if (!dir.exists(mod.data.dir)) {dir.create(mod.data.dir); cat(paste0("\n",mod.data.dir," created for projecting data! Please make sure the only files in here that match the search string '",search.str,"' are the model data files you want to use for projecting."),fill=T)
+	} else {
+		cat(paste0("\n",mod.data.dir," set as location for projecting data! Please make sure the only files in here that match the search string '",search.str,"' are the model data files you want to use for projecting."),fill=T)
+	}
+	if (!dir.exists(paste0(mod.data.dir,"params/"))) {dir.create(paste0(mod.data.dir,"params/")); cat(paste0(mod.data.dir,"params/ created for projecting data quantile fits!"),fill=T)} else {cat(paste0(mod.data.dir,"params/ set as location for projecting data quantile fits!"),fill=T)}
 
 	# Save -----------------------------------------------
 	defaults <- list()

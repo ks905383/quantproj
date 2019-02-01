@@ -1,7 +1,7 @@
 Package: quantproj
 Type: Package
 Title: Project Climate Data Based on Changes in Distribution Shape
-Version: 0.9.7
+Version: 0.9.8
 Author: Kevin Schwarzwald
 Maintainer: Kevin Schwarzwald <kschwarzwald@uchicago.edu>
 Description: Project climate time series into the future based on 

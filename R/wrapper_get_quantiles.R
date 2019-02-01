@@ -92,7 +92,12 @@ estimate.quantiles <- function(defaults,log=T,
 
 	# Load process inputs (lists of inputs / filepaths / etc.
 	# necessary to run qmapping procedure)
-	load(paste0(defaults$mod.data.dir,"process_inputs.RData"))
+	if (file.exists(paste0(defaults$mod.data.dir,"process_inputs.RData"))) {
+		load(paste0(defaults$mod.data.dir,"process_inputs.RData"))
+	} else {
+		process.inputs <- get.process.chunks(defaults,save.output=TRUE,search.dir=defaults$mod.data.dir)
+	}
+	
 
 	# Shuffle process inputs for processing below
 	process.inputs <- process.inputs[sample(seq(1,length(process.inputs)),length(process.inputs))]
@@ -173,9 +178,9 @@ estimate.quantiles <- function(defaults,log=T,
 
 	        # ----- SETUP --------------------------------------------------------------------
 	        cat("\n\n")
-	        print(paste0("Beginning processing for pixels with lat=",process.inputs.tmp$lat,
+	        cat(paste0("Beginning processing for pixels with lat=",process.inputs.tmp$lat,
 	                     " in region ",process.inputs.tmp$reg," (global locations ",process.inputs.tmp$global_loc[1],"-",
-	                     process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")"))
+	                     process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")"),fill=TRUE)
 
 	        # Get file year range (from position in filename, FILENAME MUST BE IN CMIP5 STANDARD BY YEAR, but can be either YYYYMMDD or YYYY)
 	        fn.year.range <- strtoi(substr(strsplit(strsplit(process.inputs.tmp$fn,'\\_|\\.')[[1]][6],'\\-')[[1]],1,4))
@@ -199,44 +204,12 @@ estimate.quantiles <- function(defaults,log=T,
 
 
 	        # ----- LOAD AND SET UP RAW MODEL DATA --------------------------------------------
-	        # Load raw netcdf data, by latitude band within a region. This gets the
-	        # raw data form the netcdf, permutes it so the time dimension is first,
-	        # then cbinds along the "runs" dimension to get a single time series
-	        # for each point (a [nyear*365*nruns x npoints] array)
+	        # Load raw netcdf data, by latitude band within a region. [get.ncdf] gets the 
+	        # desired pixels, and outputs them as a named list, with each element containing for 
+	        # that pixel the raw data ("Raw"), and the lat / lon coordinate. 
 	        tic(paste0("loading ",defaults$mod.name," data for ",length(process.inputs.tmp$lon)," pixel(s)"))
-	        ncdata <- nc_open(paste0(defaults$mod.data.dir,process.inputs.tmp$fn))
-	        if (length(process.inputs.tmp$local_idxs)==1) {
-	          Raw <- sapply(aperm(ncvar_get(ncdata,varid=defaults$filevar,
-	                                        start=c(1,process.inputs.tmp$local_idxs[1],(defaults$mod.year.range[1]-fn.year.range[1])*365+1),
-	                                        count=c(-1,length(process.inputs.tmp$local_idxs),(defaults$mod.year.range[2]-defaults$mod.year.range[1]+1)*365)),
-	                              c(2,1)),
-	                        cbind)
-	        } else {
-	          Raw <- apply(aperm(ncvar_get(ncdata,varid=defaults$filevar,
-	                                       start=c(1,process.inputs.tmp$local_idxs[1],(defaults$mod.year.range[1]-fn.year.range[1])*365+1),
-	                                       count=c(-1,length(process.inputs.tmp$local_idxs),(defaults$mod.year.range[2]-defaults$mod.year.range[1]+1)*365)),
-	                             c(3,2,1)),
-	                       2,cbind)
-	        }
-	        lat <- ncvar_get(ncdata,"lat",start=process.inputs.tmp$local_idxs[1],count=length(process.inputs.tmp$local_idxs))
-	        lon <- ncvar_get(ncdata,"lon",start=process.inputs.tmp$local_idxs[1],count=length(process.inputs.tmp$local_idxs))
-	        nc_close(ncdata)
+	        Raw <- get.ncdf(defaults,process.inputs.tmp,year.range=defaults$mod.year.range)
 	        toc()
-
-	        # Make into list (the [if] is because it otherwise breaks for 1-D
-	        # vectors since they're stored explicitly as 1-D in R instead of 2-D
-	        # with a singleton)
-	        raw.list <- list()
-	        if (length(lat)>1) {
-	          for (x in seq(1,length(lat))) {
-	            raw.list[[x]] <- list(Raw=Raw[,x],lat=lat[x],lon=lon[x])
-	          }
-	          rm(x)
-	        } else {
-	          raw.list[[1]] <- list(Raw=Raw,lat=lat,lon=lon)
-	        }
-	        Raw <- raw.list
-	        rm(raw.list)
 
 	        # If resampling (for uncertainty analysis), get the run indices, and
 	        # repeat the base data so that every bootstrap run is its own "pixel"
@@ -275,7 +248,7 @@ estimate.quantiles <- function(defaults,log=T,
 	        # ----- ESTIMATE DATA USING GET.QUANTILES ---------------------------------
 	        params <- lapply(Raw,function(input.list) {
 	          cat("\n") #Insert newlines to add space between messages of different processing chunks
-	          print(paste0("Processing lon = ",input.list$lon))
+	          cat(paste0("Processing lon = ",input.list$lon),fill=TRUE)
 	          get.quantiles(input.list$Raw,defaults$norm.x.df,defaults$bulk.x.df,
 	                        defaults$tail.x.df,defaults$q_bulk,defaults$q_tail,defaults$q_norm,
 	                        year.range=defaults$mod.year.range,
@@ -304,19 +277,20 @@ estimate.quantiles <- function(defaults,log=T,
 	        # Save fit parameters
 	        save(file=output.fn,
 	             params)
-	        rm(list=c("Raw","lat","lon","params"))
-	        print(paste0(defaults$mod.name," quantile fits complete and saved for pixels with lat=",process.inputs.tmp$lat,
+	        rm(list=c("Raw","params"))
+	        cat(paste0(defaults$mod.name," quantile fits complete and saved for pixels with lat=",process.inputs.tmp$lat,
 	                     " in region ",process.inputs.tmp$reg," (global locations ",process.inputs.tmp$global_loc[1],"-",
-	                     process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")!"))
+	                     process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")!"),fill=TRUE)
+	        cat(paste0("Parameters saved in ",output.fn),fill=TRUE)
 	        cat("\n")
 
 	      },error=function(e) {
 	        print(e)
 	        # Remove the temporary file if the run has an error
 	        file.remove(output.fn)
-	        print(paste0("Error occured on the ",defaults$mod.name," quantile fits run for pixels with lat=",process.inputs.tmp$lat,
+	        cat(paste0("Error occured on the ",defaults$mod.name," quantile fits run for pixels with lat=",process.inputs.tmp$lat,
 	                     " in region ",process.inputs.tmp$reg," (global locations ",process.inputs.tmp$global_loc[1],"-",
-	                     process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")!"))
+	                     process.inputs.tmp$global_loc[length(process.inputs.tmp$global_loc)],")!"),fill=TRUE)
 	        cat("\n")
 	      })
 	    } else {
@@ -324,7 +298,7 @@ estimate.quantiles <- function(defaults,log=T,
 	                  " due to set server time limits."))
 	    }
 	  } else {
-	    print(paste0(output.fn," already exists, was skipped."))
+	    cat(paste0(output.fn," already exists, was skipped."),fill=TRUE)
 	    cat("\n")
 	  }
 
