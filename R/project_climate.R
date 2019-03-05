@@ -115,6 +115,11 @@
 #' @param rand.seed.set set random seed for resampling (default=\code{42})
 #'
 #' @return see "Output options" section above.
+#' 
+#' @importFrom tictoc tic toc
+#' @importFrom xts xts timeBasedSeq
+#' @importFrom quantreg rq
+#' @importFrom abind abind
 
 # unlike with the wrappers, here the dfs are taken from [params], not [defaults] (except for base.norm.x.df)
 

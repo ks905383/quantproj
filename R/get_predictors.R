@@ -60,6 +60,9 @@
 #'         filename is: "\code{[aux.dir]/bases/spline_basis_functions_[nyears]years_[n_files]runs_[df.x]-[df.t]-[df.xt]df(_[lat.volc]volc).RData}"
 #'
 #' @return a numerical matrix
+#' 
+#' @importFrom pbs pbs
+#' @importFrom splines ns
 
 get.predictors <- function(n_files=1,
   dfs=numeric(),df.x=numeric(),df.t=numeric(),df.xt=numeric(),

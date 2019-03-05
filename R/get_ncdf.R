@@ -57,6 +57,9 @@
 #'
 #' @return A list; each element reperesenting a pixel, containing named
 #'  subelements \code{lat}, \code{lon}, and the raw data \code{Raw}.  
+#'
+#' @importFrom ncdf4 nc_open ncvar_get
+#' @importFrom abind abind
 
 
 get.ncdf <- function(defaults,process.inputs.tmp,year.range=numeric()) {

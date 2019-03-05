@@ -48,7 +48,7 @@ A list; each element reperesenting a pixel, containing named
    \item{variable setup}{Currently, the code expects the primary variable to 
    have either a location dimension (giving the linear index of a location),
    or a lon x lat grid. These are all identified by name - the search terms
-   used can be set in \code{efaults$varnames} - out-of-the-box, the package 
+   used can be set in \code{defaults$varnames} - out-of-the-box, the package 
    for example supports "lat", "latitude", "Latitude", and "latitude_1" as 
    possible names for the "lat" dimension.}
    \item{locations}{The code expects there to be two location variables,

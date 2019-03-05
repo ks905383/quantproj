@@ -69,6 +69,8 @@
 #'   running out.
 #'
 #' @return Nothing. Output is saved instead.
+#'
+#' @importFrom tictoc tic toc 
 
 
 # SO FAR THIS ASSUMES THAT LINEAR INDEXING IS ACROSS LONS

@@ -91,6 +91,10 @@
 #'   listing of all the estimated quantiles), \code{norm.x.df},
 #'   \code{bulk.x.df}, and \code{tail.x.df}, and \code{lat}, \code{lon}, and
 #'   \code{year.range}.
+#'
+#' @importFrom tictoc tic toc
+#' @importFrom quantreg rq.fit.pfn
+#' @importFrom xts coredata 
 
 get.quantiles <- function(model.y,norm.x.df, bulk.x.df,tail.x.df,
                           q_norm, q_bulk, q_tail, year.range=c(1920,2099),

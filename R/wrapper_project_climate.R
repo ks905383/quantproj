@@ -93,6 +93,7 @@ build.projection <- function(defaults,log=T,
 	# Shuffle process inputs for processing below
 	#process.inputs <- process.inputs[sample(seq(1,length(process.inputs)),length(process.inputs))]
 
+
 	# ----- LOAD BASIS FUNCTIONS  ------------------------------------------------------
 	# Load bulk basis function (just one run)
 	basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$mod.year.range)+1,"years_",

@@ -9,6 +9,8 @@
 #' @return a merged file containing all calculated regression coefficients in a
 #'   large list, \code{params}, and saved in \code{[defaults$mod.data.dir]/params/}
 #'   as \code{[filevar]_day_[mod.name]_quantfit_params_[mod.year.range[1]-mod.year.range[2]]_alllocs.RData}.
+#'
+#' @importFrom rlist list.select
 
 combine.params <- function(defaults) {
   # Set output filename

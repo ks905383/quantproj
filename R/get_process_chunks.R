@@ -53,6 +53,8 @@
 #'   the file (the variable \code{run} in the \emph{NetCDF} file; 1 otherwise), 
 #' 	 and the within-file indices along each location dimension (either just 
 #'	 location or lon x lat) \code{dim_idxs}. 
+#'
+#' @importFrom ncdf4 nc_open ncvar_get
 
 
 # SHOULD A FUTURE VERSION PUT IN WILDCARDS IN THE MODEL / EXPERIMENT FIELDS BY DEFAULT? 

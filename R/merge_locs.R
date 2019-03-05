@@ -24,6 +24,10 @@
 #' @param comments if desired, a 'comments' global attribute will be
 #' 			added to the NetCDF file, with the string input to this
 #' 			option as the body
+#'
+#' @importFrom rlist list.select
+#' @importFrom ncdf4 ncdim_def ncvar_def nc_create ncvar_put ncatt_put nc_close
+
 
 combine.locs <- function(defaults,comments=character()) {
 

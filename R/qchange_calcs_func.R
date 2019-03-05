@@ -31,11 +31,13 @@
 #'   it will look for the output file of \code{\link{combine.locs}}, which concantenates the output of with data from
 #'   \code{\link{estimate.quantiles}}.
 #'
+#' @importFrom tictoc tic toc
+#' @importFrom ncdf4 ncdim_def ncvar_def nc_create ncvar_put ncatt_put nc_close
+#' @importFrom abind abind
+
+
 
 # (I want to add an 'export as grid' function....)
-
-#library(ncdf4)
-#library(abind)
 
 get.quantile.changes <- function(defaults,
                              export.nc=T,
