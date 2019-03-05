@@ -121,6 +121,7 @@
 #' @importFrom quantreg rq
 #' @importFrom abind abind
 
+
 # unlike with the wrappers, here the dfs are taken from [params], not [defaults] (except for base.norm.x.df)
 
 project.climate <- function(defaults,params,base.data,output.years,
