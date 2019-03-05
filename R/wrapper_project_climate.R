@@ -349,7 +349,7 @@ build.projection <- function(defaults,log=T,
 						})
 
 					} else {
-						stop(paste0("Run stopped at ",Sys.time()," after ",difftime(Sys.time(),start.time),
+						stop(paste0("Run stopped at ",Sys.time()," after ",format(difftime(Sys.time(),start.time)),
 							" due to set server time limits."))
 					}
 				} else {
