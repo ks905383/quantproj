@@ -11,7 +11,7 @@ This package is based on code originally developed by Matz Haugen (@matzhaugen -
 ## Base Code Run
 Do you just want to quickly get started building a distributionally-scaled projection of weather data? Here's the basic code run that will get you there:
 
-1. **Set Inputs and Build Data Structure:** Run `defaults <- set.defaults(...)`, which will build the directories needed (if no base directories are specified in the input, `set.defaults()` will build them in your current working directory), and allows you to set which quantiles to estimate, how many degrees of freedom to use in your basis functions, etc. The defaults are set to the processing as done in _Haugne et al. (2018)_. 
+1. **Set Inputs and Build Data Structure:** Run `defaults <- set.defaults(...)`, which will build the directories needed (if no base directories are specified in the input, `set.defaults()` will build them in your current working directory), and allows you to set which quantiles to estimate, how many degrees of freedom to use in your basis functions, etc. The defaults are set to the processing as done in _Haugen et al. (2018)_. 
 2. **Populate Data Structure**: Put your data in the right locations and in the **right format** (see `?get.process.chunks` for information on correct file structures) - the data you want to project should be in `defaults$base.data.dir`, and the data you want to use to project should be in `defaults$mod.data.dir`. Make sure to not put `.nc` files with similar filename structures in those directories;... it could mess things up. 
 3. **Generate Basis Functions:** Run `get.predictors()` to build the basis functions for the quantile estimates. You'll want to build one for every combination of degrees of freedom and number of files/runs in your analysis (all functions that need it will generate these by themselves if the files don't exist, but you get a major speed boost from pre-generating them). For the setup used in _Haugen et al. (2018)_, you will need 5: 
    - `get.predictors(n_files=40,dfs=c(14,6,3),save.predictors=TRUE)` (for model normalizing and 'bulk' fits for 40 runs)
@@ -48,6 +48,7 @@ Crucially, each quantile is assumed to be changing **slowly** and **smoothly** o
 - a periodic component based only on the _day of year_ (modeling the seasonal cycle)
 - a non-periodic component based only on the _year_ (modeling the long-term secular change due to global warming)
 - an interaction term (modeling the long-term change in the seasonal cycle)
+
 The degrees of freedom for each of these segments is set in the code through the `set.defaults()` function. 
 
 
