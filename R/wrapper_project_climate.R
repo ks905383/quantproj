@@ -73,11 +73,21 @@
 #' @param assumed.avg.processing.time by default 5 (seconds), the estimated
 #'   processing time per pixel. Used in interrupting batch run if time is
 #'   running out.
+#' @param process.inputs add custom process.inputs list. By default, the code
+#' 	 attempts to load [defaults$mod.data.dir]/process_inputs.RData. If this is 
+#'	 not desired (i.e. you want to just process a subset of process chunks), 
+#' 	 put a subsetted output of \code{get.process.chunks}here , or make your own - 
+#' 	 just make sure that it's a list of process chunks, with every element 
+#' 	 containing at least the fields [global_loc] (used to load the correct
+#'	 [params] file), [lat] (just one lat, by lat band), [lon] (all the lon
+#'   values desired), and [fn] (the raw data filename from which the params
+#'   were calculated).
 #'
 #' @return Nothing. Output is saved instead.
 
 build.projection <- function(defaults,log=T,
-							   max.runtime=4*60*60,assumed.avg.processing.time=5) {
+							   max.runtime=4*60*60,assumed.avg.processing.time=5,
+							   process.inputs=list()) {
 
 	# ----- SETUP  ----------------------------------------------------------------------
 	# Set start time, for logging and cancelling
@@ -89,9 +99,11 @@ build.projection <- function(defaults,log=T,
 	}
 
 	# Load processing inputs
-	load(paste0(defaults$mod.data.dir,"process_inputs.RData"))
-	# Shuffle process inputs for processing below
-	#process.inputs <- process.inputs[sample(seq(1,length(process.inputs)),length(process.inputs))]
+	if (length(process.inputs)==0) {
+		load(paste0(defaults$mod.data.dir,"process_inputs.RData"))
+		# Shuffle process inputs for processing below
+		#process.inputs <- process.inputs[sample(seq(1,length(process.inputs)),length(process.inputs))]
+	}
 
 
 	# ----- LOAD BASIS FUNCTIONS  ------------------------------------------------------
