@@ -144,7 +144,7 @@ build.projection <- function(defaults,log=T,
 	# Match up with model data
 	for (chunk in seq(1:length(process.inputs))) {
 		process.idx <- which(base.regs == process.inputs[[chunk]]$reg&base.lats == process.inputs[[chunk]]$lat)
-		if (length(process.idx)!=0 && identical(process.inputs[[chunk]]$lon,process.inputs.base[[process.idx]]$lon)) {
+		if (length(process.idx)!=0 && all(process.inputs[[chunk]]$lon == process.inputs.base[[process.idx]]$lon)) {
 			process.inputs[[chunk]]$fn_base <- process.inputs.base[[process.idx]]$fn
 			process.inputs[[chunk]]$local_idxs_base <- process.inputs.base[[process.idx]]$local_idxs
 		} else {
