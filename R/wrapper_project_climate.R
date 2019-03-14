@@ -292,7 +292,7 @@ build.projection <- function(defaults,log=T,
 							t.out <- do.call("c",lapply(defaults$base.year.range[1]:defaults$base.year.range[2],
 								function(yr) {timeBasedSeq(paste0(yr,'/',yr,'/d'))}))
 				     		t.out <- t.out[strftime(t.out,format="%j")!='366'] #(removing leap years)
-				     		Raw <- lapply(Raw,function(R) {R$Raw <- xts(R$Raw,order.by=t.out; return(R)}))
+				     		Raw <- lapply(Raw,function(R) {R$Raw <- xts(R$Raw,order.by=t.out); return(R)})
 
 							# Repeat time series out for each element
 							if (defaults$bootstrapping) {
@@ -301,7 +301,7 @@ build.projection <- function(defaults,log=T,
 								# params in the for loop below, for reasons not yet solved by me or the internet.
 								assign('Raw',rep(Raw,each=defaults$nboots))
 
-								# Re-assign params so that each copy is assigned a different bootstrapped param fit file
+								# Assign params so that each copy is assigned a different bootstrapped param fit file
 								for (x in seq(1,length(params))) {
 									Raw[[x]]$params <- params[[x]]
 								}
@@ -310,6 +310,11 @@ build.projection <- function(defaults,log=T,
 								# parameter information assigning below easier
 								process.inputs.tmp$global_loc <- rep(process.inputs.tmp$global_loc,each=defaults$nboots)
 								process.inputs.tmp$run.idx <- rep(1:defaults$nboots,length(process.inputs.tmp$lon))
+							} else {
+								# Assign params
+								for (x in seq(1,length(params))) {
+									Raw[[x]]$params <- params[[x]]
+								}
 							}
 
 
