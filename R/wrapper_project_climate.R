@@ -145,7 +145,12 @@ build.projection <- function(defaults,log=T,
 	for (chunk in seq(1:length(process.inputs))) {
 		process.idx <- which(base.regs == process.inputs[[chunk]]$reg&base.lats == process.inputs[[chunk]]$lat)
 		if (length(process.idx)!=0 && all(process.inputs[[chunk]]$lon == process.inputs.base[[process.idx]]$lon)) {
-			process.inputs[[chunk]]$fn_base <- process.inputs.base[[process.idx]]$fn
+			#process.inputs[[chunk]]$fn_base <- process.inputs.base[[process.idx]]$fn
+			process.inputs[[chunk]]$fn <- process.inputs[[chunk]]$fn_base <- process.inputs.base[[process.idx]]$fn
+			process.inputs[[chunk]]$fn_path <- defaults$base.data.dir
+			process.inputs[[chunk]]$dim_list <- process.inputs.base[[process.idx]]$dim_list
+			process.inputs[[chunk]]$dim_idxs <- process.inputs.base[[process.idx]]$dim_idxs
+
 			process.inputs[[chunk]]$local_idxs_base <- process.inputs.base[[process.idx]]$local_idxs
 		} else {
 			process.inputs[[chunk]]$fn_base <- process.inputs[[chunk]]$local_idxs_base <- NA
@@ -287,7 +292,7 @@ build.projection <- function(defaults,log=T,
 							t.out <- do.call("c",lapply(defaults$base.year.range[1]:defaults$base.year.range[2],
 								function(yr) {timeBasedSeq(paste0(yr,'/',yr,'/d'))}))
 				     		t.out <- t.out[strftime(t.out,format="%j")!='366'] #(removing leap years)
-				     		Raw <- lapply(Raw,function(R) R$Raw <- xts(R$Raw,order.by=t.out))
+				     		Raw <- lapply(Raw,function(R) {R$Raw <- xts(R$Raw,order.by=t.out; return(R)}))
 
 							# Repeat time series out for each element
 							if (defaults$bootstrapping) {
