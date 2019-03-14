@@ -245,14 +245,10 @@ build.projection <- function(defaults,log=T,
 							# Load reanalyisis normalizing basis functions
 							if (length(norm.x.base)==0) {
 								if (defaults$get.volc) {
-									# Get lats from the volcanic data to pick right basis file
-									ncdata.volc <- nc_open(defaults$volc.path)
-								    lat.volc <- ncvar_get(ncdata.volc, 'lat')
-								    nc_close(ncdata.volc)
 								    # Load basis file
 								    basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$base.year.range)+1,"years_1runs_",
 								    	paste0(defaults$base.norm.x.df,collapse="-"),
-								    	"df_volc",gsub("\\.","-",round(lat.volc[which.min(abs(as.vector(lat.volc)-as.vector(process.inputs.tmp$lat)))],1)),".RData")
+								    	"df_volc",gsub("\\.","-",round(lat.volc[which.min(abs(as.vector(volc.data$lat)-as.vector(process.inputs.tmp$lat)))],1)),".RData")
 								    if (file.exists(basis.fn)) {
 								    	load(basis.fn);norm.x.base <- X; rm(X)
 								    } else {
@@ -268,11 +264,10 @@ build.projection <- function(defaults,log=T,
 						    # Get spline basis functions for normalization fit
 						    if (length(norm.x)==0) {
 						        if (defaults$get.volc) {
-						            ncdata.volc <- nc_open(defaults$volc.path);lat.volc <- ncvar_get(ncdata.volc, 'lat');nc_close(ncdata.volc)
 						            # Load basis file
 						            basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$base.year.range)+1,"years_1runs_",
 						                paste0(defaults$base.norm.x.df,collapse="-"),
-						                "df_volc",gsub("\\.","-",round(lat.volc[which.min(abs(as.vector(lat.volc)-as.vector(process.inputs.tmp$lat)))],1)),".RData")
+						                "df_volc",gsub("\\.","-",round(lat.volc[which.min(abs(as.vector(volc.data$lat)-as.vector(process.inputs.tmp$lat)))],1)),".RData")
 						            if (file.exists(basis.fn)) {load(basis.fn);norm.x<-X;rm(x)} else {norm.x <- get.predictors(n_files=1,dfs=params[[1]]$norm.x.df,year.range=params[[1]]$year.range,get.volc=TRUE,lat=process.inputs.tmp$lat,save.predictors=T)}
 						            rm(list=c("basis.fn","ncdata.volc","lat.volc"))
 						        } else {
