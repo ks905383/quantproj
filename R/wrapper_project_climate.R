@@ -207,7 +207,7 @@ build.projection <- function(defaults,log=T,
 					# seeing if the time elapsed since the start of the run is more than
 					# 2 x the average processing time expected for the number of pixels
 					# in this run (assuming ~160 seconds / pixel)
-					if ((~defaults$bootstrapping && difftime(Sys.time(),start.time,units="secs") < (max.runtime)-2*assumed.avg.processing.time*length(process.inputs.tmp$global_loc)) ||
+					if ((!defaults$bootstrapping && difftime(Sys.time(),start.time,units="secs") < (max.runtime)-2*assumed.avg.processing.time*length(process.inputs.tmp$global_loc)) ||
 						(difftime(Sys.time(),start.time,units="secs") < (max.runtime)-2*assumed.avg.processing.time*length(process.inputs.tmp$global_loc*defaults$nboots))) {
 
 						# Save a placeholder file in the directory; to make sure no
