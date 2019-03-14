@@ -248,13 +248,13 @@ build.projection <- function(defaults,log=T,
 								    # Load basis file
 								    basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$base.year.range)+1,"years_1runs_",
 								    	paste0(defaults$base.norm.x.df,collapse="-"),
-								    	"df_volc",gsub("\\.","-",round(lat.volc[which.min(abs(as.vector(volc.data$lat)-as.vector(process.inputs.tmp$lat)))],1)),".RData")
+								    	"df_volc",gsub("\\.","-",round(volc.data$lat[which.min(abs(as.vector(volc.data$lat)-as.vector(process.inputs.tmp$lat)))],1)),".RData")
 								    if (file.exists(basis.fn)) {
 								    	load(basis.fn);norm.x.base <- X; rm(X)
 								    } else {
 								    	norm.x.base <- get.predictors(n_files=1,dfs=defaults$base.norm.x.df,year.range=defaults$base.year.range,get.volc=TRUE,lat=process.inputs.tmp$lat)
 								    }
-								    rm(list=c("basis.fn","ncdata.volc","lat.volc"))
+								    rm(list=c("basis.fn"))
 								} else {
 									basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$base.year.range)+1,"years_1runs_",paste0(defaults$base.norm.x.df,collapse="-"),"df.RData")
 									if (file.exists(basis.fn)) {load(basis.fn);norm.x.base <- X; rm(X)} else {norm.x.base <- get.predictors(n_files=1,dfs=defaults$base.norm.x.df,year.range=defaults$base.year.range,save.predictors=T)}
@@ -267,9 +267,9 @@ build.projection <- function(defaults,log=T,
 						            # Load basis file
 						            basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$base.year.range)+1,"years_1runs_",
 						                paste0(defaults$base.norm.x.df,collapse="-"),
-						                "df_volc",gsub("\\.","-",round(lat.volc[which.min(abs(as.vector(volc.data$lat)-as.vector(process.inputs.tmp$lat)))],1)),".RData")
+						                "df_volc",gsub("\\.","-",round(volc.data$lat[which.min(abs(as.vector(volc.data$lat)-as.vector(process.inputs.tmp$lat)))],1)),".RData")
 						            if (file.exists(basis.fn)) {load(basis.fn);norm.x<-X;rm(x)} else {norm.x <- get.predictors(n_files=1,dfs=params[[1]]$norm.x.df,year.range=params[[1]]$year.range,get.volc=TRUE,lat=process.inputs.tmp$lat,save.predictors=T)}
-						            rm(list=c("basis.fn","ncdata.volc","lat.volc"))
+						            rm(list=c("basis.fn"))
 						        } else {
 						            basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$base.year.range)+1,"years_1runs_",paste0(params$norm.x.df,collapse="-"),"df.RData")
 						            if (file.exists(basis.fn)) {load(basis.fn);norm.x<-X;rm(x)} else {norm.x <- get.predictors(n_files=1,dfs=params[[1]]$norm.x.df,year.range=-params[[1]]$year.range,save.predictors=T)}
