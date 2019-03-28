@@ -322,7 +322,7 @@ get.process.chunks <- function(defaults,save.output=FALSE,search.dir=character()
 
 			# Get indices of the location dimension(s) <- 2 if lat/lon, 1 if loc
 			if ("lon" %in% dim.list.var && "lat" %in% dim.list.var) {
-				idx.dims <- list(lon=which(lon_vec==lons.out),lat=which(lat_vec==lats_unique[lat.idx]))
+				idx.dims <- list(lon=match(lons.out,lon_vec),lat=match(lats_unique[lat.idx],lat_vec))
 			} else {
 				idx.dims <- list(loc=idxs.tmp)
 			}
