@@ -114,7 +114,9 @@ get.ncdf <- function(defaults,process.inputs.tmp,year.range=numeric()) {
     count <- array(-1,length(process.inputs.tmp$dim_list))
     names(start) <- names(count) <- process.inputs.tmp$dim_list
 
-    starts <- rep(as.data.frame(start),length(fns)); counts <- rep(as.data.frame(count),length(fns))
+    starts <- lapply(seq(1:length(fns)),function(x) start)
+    counts <- lapply(seq(1:length(fns)),function(x) count)
+    #starts <- rep(as.data.frame(start),length(fns)); counts <- rep(as.data.frame(count),length(fns))
 
     fn.year.ranges <- sapply(fns,function(fn) strtoi(substr(strsplit(strsplit(fn,'\\_|\\.')[[1]][6],'\\-')[[1]],1,4)))
 
