@@ -156,7 +156,7 @@ build.projection <- function(defaults,log=T,
 			process.inputs[[chunk]]$fn_base <- process.inputs[[chunk]]$local_idxs_base <- NA
 		}
 	}
-	rm(list=c("base.lats","base.regs","chunk","process.inputs.base"))
+	rm(list=c("base.lats","base.regs","chunk","process.inputs.base","process.idx"))
 
 	# ----- SET A BY-PROCESS-CHUNK WRAPPER FUNCTION ------------------------------------------------------
 	run.map <- function(process.inputs.tmp,
@@ -182,13 +182,14 @@ build.projection <- function(defaults,log=T,
 
 				# Get better string filename summary for the projection base year choosing
 				if (defaults$index.type=="resampling_rep") {
-					proj.method <- "resample"
+					proj.method <- paste0("resample",defaults$resampling.timescale)
 				} else if (defaults$index.type=="resampling") {
-					proj.method <- "NoRepResample"
+					proj.method <- paste0("NoRepResample",defaults$resampling.timescale)
 				} else if (defaults$index.type=="raw") {
-					proj.method <- "projectby"
+					proj.method <- "projectraw"
+				} else if (defaults$index.type=="raw_mean") {
+					proj.method <- "projectbyavg"
 				}
-				proj.method<-paste0(proj.method,defaults$resampling.timescale)
 
 				# Set saving filename
 				output.fn <- paste0(defaults$base.data.dir,"output/",defaults$filevar,"_day_",

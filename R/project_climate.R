@@ -64,6 +64,12 @@
 #'          span of \code{output.years}. If \code{output.years}
 #'          is longer, the projection wraps around - i.e.
 #'          2011-2050 is projected from [1979-2010 1979-1987].}
+#'      \item{raw_mean}{The behvavior is identical to that of the
+#'          \code{raw} option above, but the model quantiles are 
+#'          averaged across the time periods before the change is 
+#'          applied - in other words, each matched base quantile is
+#'          projected by the change in the average quantile between
+#'          the base and projecting time periods.}
 #'      \item{resample}{NOT YET IMPLEMENTED}
 #'  }
 #'
@@ -179,7 +185,7 @@ if (all(is.nan(base.data))) {
             rm(list=c("basis.fn"))
         } else {
             basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$base.year.range)+1,"years_1runs_",paste0(params$norm.x.df,collapse="-"),"df.RData")
-            if (file.exists(basis.fn)) {load(basis.fn)} else {norm.x.base <- get.predictors(n_files=1,dfs=params$norm.x.df,year.range=-params$year.range,save.predictors=T)}
+            if (file.exists(basis.fn)) {load(basis.fn); norm.x <- X; rm(X) } else {norm.x <- get.predictors(n_files=1,dfs=params$norm.x.df,year.range=-params$year.range,save.predictors=T)}
         }
     }
     # Calculate spline fit for normalization
@@ -231,18 +237,16 @@ if (all(is.nan(base.data))) {
                 paste0(defaults$base.norm.x.df,collapse="-"),
                 "df_volc",gsub("\\.","-",round(volc.data$lat[which.min(abs(as.vector(volc.data$lat)-as.vector(process.inputs.tmp$lat)))],1)),".RData")
             if (file.exists(basis.fn)) {
-                # Make sure not to overwrite
-                tmp.norm.x <- norm.x
                 load(basis.fn)
                 # Rename to not conflict with LENS basis loading below
-                norm.x.base <- norm.x; rm(norm.x);norm.x <- tmp.norm.x; rm(tmp.norm.x)
+                norm.x.base <- X; rm(X);
             } else {
                 norm.x.base <- get.predictors(n_files=1,dfs=defaults$base.norm.x.df,year.range=defaults$base.year.range,get.volc=TRUE,lat=process.inputs.tmp$lat)
             }
             rm(list=c("basis.fn"))
         } else {
             basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$base.year.range)+1,"years_1runs_",paste0(defaults$base.norm.x.df,collapse="-"),"df.RData")
-            if (file.exists(basis.fn)) {load(basis.fn)} else {norm.x.base <- get.predictors(n_files=1,dfs=defaults$base.norm.x.df,year.range=defaults$base.year.range)}
+            if (file.exists(basis.fn)) {load(basis.fn); norm.x.base <- X; rm(X)} else {norm.x.base <- get.predictors(n_files=1,dfs=defaults$base.norm.x.df,year.range=defaults$base.year.range)}
         }
     }
     # Fit normalizing quantiles (spline fit) to reanalysis data
@@ -308,7 +312,7 @@ if (all(is.nan(base.data))) {
 
 			}
 
-	} else if (index.type=="raw") {
+	} else if (index.type%in%c("raw","raw_mean")) {
 		# For non-resampling indexing (just taking data points in the original order),
 		# just count up the indices to the length of the output.year time series - if
 		# the original timeseries isn't long enough, wrap around.
@@ -335,6 +339,7 @@ if (all(is.nan(base.data))) {
     rm(q_full)
     toc()
 
+
     # ----- MAP QUANTILES -----------------------------------------------------
     tic("Project distribution changes")
     # Get match of (post-normalization) reanalysis value to their corresponding
@@ -345,6 +350,23 @@ if (all(is.nan(base.data))) {
                     1,
                     function(q_excs) max(which(q_excs),1))
 
+    # If bulk projecting, take the average of each day-of-year quantile in the 
+    # projecting model across the base / proj time periods, and replace the 
+    # original quantile time series with just those values (by day-of-year)
+    # (letting this happen *after* the quantile matching, since otherwise 
+    # you'd have issues if there's a trend in the base period, I think)
+    if (index.type=="raw_mean") {
+        q_full_i <- apply(apply(array(q_full_i,c(365,dim(q_full_i)[1]/365,dim(q_full_i)[2])),c(1,3),mean),
+            2,rep,times=dim(q_full_i)[1]/365)
+        q_full_f <- apply(apply(array(q_full_f,c(365,dim(q_full_f)[1]/365,dim(q_full_f)[2])),c(1,3),mean),
+            2,rep,times=dim(q_full_f)[1]/365)
+
+        yqhat_norm[base.idxs.model,] <- apply(apply(array(yqhat_norm[base.idxs.model,],c(365,length(base.idxs.model)/365,dim(yqhat_norm)[2])),c(1,3),mean),
+                                                    2,rep,times=length(base.idxs.model)/365)
+        yqhat_norm[proj.idxs,] <- apply(apply(array(yqhat_norm[proj.idxs,],c(365,length(proj.idxs)/365,dim(yqhat_norm)[2])),c(1,3),mean),
+                                                    2,rep,times=length(proj.idxs)/365)
+    }
+
     # Get pre-allocated matrix for reanalysis output
     base.dq <- vector("numeric",length(base.idxs))
 
@@ -352,8 +374,9 @@ if (all(is.nan(base.data))) {
     # or highest extreme quantiles, scale the data by the change in that
     # lowest or highest quantile from the first year, to the final year
     edge.idxs <- is.element(q_idxs,c(1,length(params$q_all)))
-    base.dq[edge.idxs] <- as.numeric(base.data)[base.idxs[edge.idxs]] + q_full_f[cbind(which(edge.idxs),q_idxs[edge.idxs])] -
-                                                                q_full_i[cbind(which(edge.idxs),q_idxs[edge.idxs])]
+    base.dq[edge.idxs] <- as.numeric(base.data)[base.idxs[edge.idxs]] + 
+                          q_full_f[cbind(which(edge.idxs),q_idxs[edge.idxs])] -
+                          q_full_i[cbind(which(edge.idxs),q_idxs[edge.idxs])]
 
     # For the non-edge/extreme quantiles, scale the reanalysis data point by
     # the (linearly) interpolated quantile change between the two closest
@@ -366,8 +389,9 @@ if (all(is.nan(base.data))) {
                   (q_full_i[cbind(which(!edge.idxs),q_idxs[!edge.idxs]+1)] -
                     q_full_i[cbind(which(!edge.idxs),q_idxs[!edge.idxs])])
     base.dq[!edge.idxs] <- q_full_f[cbind(which(!edge.idxs),q_idxs[!edge.idxs])] +
-                frac_q_loc * (q_full_f[cbind(which(!edge.idxs),q_idxs[!edge.idxs]+1)] -
-                q_full_f[cbind(which(!edge.idxs),q_idxs[!edge.idxs])])
+                               frac_q_loc * (q_full_f[cbind(which(!edge.idxs),q_idxs[!edge.idxs]+1)] -
+                               q_full_f[cbind(which(!edge.idxs),q_idxs[!edge.idxs])])
+    
     rm(list=c("frac_q_loc","edge.idxs"))
 
     # Get final transformed reanalysis data by un-normalizing the scaled data:
@@ -375,9 +399,9 @@ if (all(is.nan(base.data))) {
     # for inter-quartile range (or whatever quantiles used to normalize data,
     # assumed here to be the 1st and 3rd columns of yqhat_norm) IQR, medians Med,
     # and T_f from the scaling above
-    proj.data <-  (yqhat_base[base.idxs,3] - yqhat_base[base.idxs,1]) *
-                  (yqhat_norm[proj.idxs, 3] - yqhat_norm[proj.idxs, 1]) / (yqhat_norm[base.idxs.model, 3] - yqhat_norm[base.idxs.model, 1]) *
-                  base.dq +
+    proj.data <- (yqhat_base[base.idxs,3] - yqhat_base[base.idxs,1]) *
+                 (yqhat_norm[proj.idxs, 3] - yqhat_norm[proj.idxs, 1]) / (yqhat_norm[base.idxs.model, 3] - yqhat_norm[base.idxs.model, 1]) *
+                 base.dq +
                  yqhat_norm[proj.idxs,params$q_norm==0.5] - yqhat_norm[base.idxs.model,params$q_norm==0.5] + yqhat_base[base.idxs,2]
 
     # ----- OUTPUT ------------------------------------------------------------

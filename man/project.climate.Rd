@@ -120,6 +120,12 @@ resampling an existing time period by day or year.
          span of \code{output.years}. If \code{output.years}
          is longer, the projection wraps around - i.e.
          2011-2050 is projected from [1979-2010 1979-1987].}
+     \item{raw_mean}{The behvavior is identical to that of the
+         \code{raw} option above, but the model quantiles are 
+         averaged across the time periods before the change is 
+         applied - in other words, each matched base quantile is
+         projected by the change in the average quantile between
+         the base and projecting time periods.}
      \item{resample}{NOT YET IMPLEMENTED}
  }
 }

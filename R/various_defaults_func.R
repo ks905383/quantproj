@@ -39,6 +39,8 @@
 #' @param mod.data.dir the directory with raw model ensemble data used to project
 #' @param aux.dir directory for auxiliary files - saved basis functions, etc.
 #'
+#' @param lat.clip,lon.clip if desired, a \code{c(min,max)} vector giving bounds for a lon/lat box; only data within this box will be loaded and processed
+#'
 #' @param filevar variable shorthand (CMIP5 syntax, def: \code{"tas"} for near-surface air temperature)
 #' @param freq data frequency shorthand (CMIP5 syntax, def: \code{"day"} for daily)
 #' @param mod.name name of model ensemble (def: \code{"LENS"})
@@ -89,6 +91,11 @@ filevar="tas",
 mod.name="LENS",
 # Name of the weather product
 base.name="ERA-INTERIM",
+
+#------ GEOGRAPHIC PARAMETERS -----
+# Set to only process a subset of locations
+lat.clip=numeric(),
+lon.clip=numeric(),
 
 #------ QUANTILE MAPPING PARAMETERS -----
 # Base data process year range (this is the desired

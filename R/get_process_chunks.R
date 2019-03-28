@@ -6,10 +6,13 @@
 #'
 #' @section Expected File Structure:
 #'  In general, most common forms of climate file structures are supported, 
-#' 	especially the CMIP5 structure. Variables can either be on a \code{lon x lat} 
-#'	grid or stored by linear location. Files can either contain all runs of a model
-#' 	or can be saved by run. Files can either contain the whole timeframe of a model
-#'	run or be split up in consecutive temporal chunks. Furthermore:
+#' 	especially the CMIP5 structure (for best results, filenames should still be 
+#'	in CMIP5 format with an optional "\code{_[  ]}" suffix for regional subsets, 
+#'	etc. - see the \code{\link{set.defaults}} documentation for more info). 
+#'  Variables can either be on a \code{lon x lat} grid or stored by linear 
+#'  location. Files can either contain all runs of a model or can be saved by run. 
+#'  Files can either contain the whole timeframe of a model run or be split up in 
+#'  consecutive temporal chunks. Furthermore:
 #'  \describe{
 #'    \item{filename}{the code searches for \emph{NetCDF} files using the search
 #'      string "\code{[defaults$filevar]_day_.*nc}" (by default; this can be 
@@ -24,16 +27,33 @@
 #'		possible names for the "lat" dimension.}
 #'    \item{locations}{The code expects there to be two location variables,
 #'      \code{lat} and \code{lon} (CMIP5 syntax), giving the lat/lon location of
-#'       every pixel in the file. The names of those variables can be any of the
-#' 		 alternatives given by \code{defaults$varnames}.}
+#'      every pixel in the file. The names of those variables can be any of the
+#' 		alternatives given by \code{defaults$varnames} - e.g. out of the box,
+#'		the code also checks for "latitude", "longitude", etc. See \code{set.defaults}
+#' 		for information on adding naming conventions.}
 #'    \item{multiple runs}{If there are multiple runs in the file, there should
 #'      be a \code{run} variable/dimension in the file giving the run id as an
 #'      integer}
 #'  }
 #'
+#' @section Subsetting by Latitude / Longitude Bounds:
+#' 	 If \code{defaults$lat.clip} and/or \code{defaults$lon.clip} exist, only 
+#'   information and file locations of pixels within those lat/lon bounds are 
+#' 	 returned. \code{$lat.clip} and \code{$lon.clip} should be vectors of the 
+#' 	 form \code{c(min,max)}, e.g. \code{defaults$lat.clip=c(23,52)}, 
+#'	 \code{defaults$lon.clip=c(-125,-65)} for a box around the continental USA.
+#' 	 Longitude coordinates can be entered either in a \code{[-180 180]} or in 
+#' 	 a \code{[0 360]} format, regardless of the loading data's format - they'll
+#' 	 be matched in format before subsetting. The \code{global.loc.idx} (used for
+#'   filenames) is \emph{unaffected} by the subsetting, meaning that the idx are still
+#' 	 counted with regards to the full lat/lon universe. This allows an initial 
+#'   subset to be expanded without issues with output file structures. 
+#'
 #' @param defaults the output from \code{\link{set.defaults}}. The defaults used
 #'   are \code{filevar} and, if \code{search.dir=numeric()} (by default),
-#'   \code{mod.data.dir}.
+#'   \code{mod.data.dir}. This program also supports subsets by latitude or 
+#'	 longitude, if \code{defaults$lat.clip} / \code{defaults$lon.clip} exist
+#' 	 (as \code{c(min,max)}, see below).
 #' @param save.output whether to save the file information as a file in the
 #'   search directory (as "\code{process_inputs.RData}"), by default
 #'   \code{FALSE}
@@ -225,9 +245,16 @@ get.process.chunks <- function(defaults,save.output=FALSE,search.dir=character()
 				"Data in separate files but containing continuous time chunks and/or different runs of the same experiment will be concatenated in [get.ncdf]."),fill=T)
 			cat(paste0("\nNow analyzing each of ",length(fns)," file group(s) for load chunks by latitude band..."),fill=T)
 		} else {
-			cat(paste0("\nNow analyzing each of ",length(fns)," file(s) for load chunks by latitude band...\n"),fill=T)
+			cat(paste0("\nNow analyzing each of ",length(fns)," file(s) for load chunks by latitude band..."),fill=T)
 		}
 	}
+	if (length(defaults$lat.clip)!=0) {
+		cat(paste0("(only including pixels within the latitude bounds ",paste0(defaults$lat.clip,collapse="-"),")"),fill=T)
+	}
+	if (length(defaults$lon.clip)!=0) {
+		cat(paste0("(only including pixels within the longitude bounds ",paste0(defaults$lon.clip,collapse="-"),")"),fill=T)
+	}
+	cat("\n",fill=T)
 
 	# ----- GENERATE PROCESS LIST ---------------------------------------------
 	# Set global id start in case no global ids are heading in the netcdf files
@@ -269,12 +296,29 @@ get.process.chunks <- function(defaults,save.output=FALSE,search.dir=character()
 		# Get unique latitudes
 		lats_unique <- as.vector(unique(lats))
 
+		# Subset by latitude if desired
+		if (length(defaults$lat.clip)>0) {
+			lats_unique <- lats_unique[lats_unique>=min(defaults$lat.clip) & lats_unique<=max(defaults$lat.clip)]
+			if (length(lats_unique)==0) {
+				if (show.messages) {cat(paste0(fn," has no pixels in the desired lat range (",paste0(defaults$lat.clip,collapse="-"),"), ignoring."),fill=T)}
+				next
+			}
+		}
+
 		# Make list elements per lat band
 		process.inputs.tmp <- list()
 		for (lat.idx in 1:length(lats_unique)) {
 			# Get which indices (counted from inside the file) are in that latitude band
 			idxs.tmp <- which(lats==lats_unique[lat.idx])
+			# Subset by loingitude if desired
+			if (length(defaults$lon.clip)>0) {
+				if (any(lons>180)) {defaults$lon.clip[defaults$lon.clip<0] <- defaults$lon.clip[defaults$lon.clip<0]+360}
+				if (any(lons<0)) {defaults$lon.clip[defaults$lon.clip>180] <- defaults$lon.clip[defaults$lon.clip>180]-360}
+				idxs.tmp <- idxs.tmp[lons[idxs.tmp]>=min(defaults$lon.clip) & lons[idxs.tmp]<=max(defaults$lon.clip)]
+			}
+			# Get lons out
 			lons.out <- lons[idxs.tmp]
+
 
 			# Get indices of the location dimension(s) <- 2 if lat/lon, 1 if loc
 			if ("lon" %in% dim.list.var && "lat" %in% dim.list.var) {
@@ -309,14 +353,17 @@ get.process.chunks <- function(defaults,save.output=FALSE,search.dir=character()
 				)
 		}
 
+		# Remove empty lists (can happen if the pixels by lat bound are outside of the lon bounds)
+		process.inputs.tmp <- process.inputs.tmp[unlist(lapply(process.inputs.tmp,function(x) length(x$local_idxs)))>0]
+
 		# Close netcdf file
 		nc_close(nc)
 
-		# Concatenate with existing list
+		# Concatenate to existing list
 		process.inputs <- c(process.inputs,process.inputs.tmp)
 		# ...and clean house
 		rm(list=c("nc","global_loc_idxs","lons","lats","lats_unique","lat.idx",
-			"process.inputs.tmp","idxs.tmp"))
+			"process.inputs.tmp","lons.out"))
 	}
 	if (show.messages) {
 		if (files.by.timesub || files.by.run) {

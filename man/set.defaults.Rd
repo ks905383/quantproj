@@ -7,8 +7,9 @@
 set.defaults(aux.dir = paste0(getwd(), "/aux/"),
   base.data.dir = paste0(getwd(), "/base_data/"),
   mod.data.dir = paste0(getwd(), "/model_data/"), filevar = "tas",
-  mod.name = "LENS", base.name = "ERA-INTERIM", base.year.range = c(1979,
-  2010), mod.year.range = c(1979, 2099), proj.year.range = c(2011, 2099),
+  mod.name = "LENS", base.name = "ERA-INTERIM", lat.clip = numeric(),
+  lon.clip = numeric(), base.year.range = c(1979, 2010),
+  mod.year.range = c(1979, 2099), proj.year.range = c(2011, 2099),
   q_norm = c(0.1, 0.5, 0.9), norm.x.df = c(14, 6, 3),
   base.norm.x.df = c(10, 1, 0), get.volc = F, q_bulk = c(0.1, 0.18, 0.25,
   0.35, 0.42, 0.5, 0.58, 0.65, 0.75, 0.82, 0.9), bulk.x.df = c(14, 6, 3),
@@ -31,6 +32,8 @@ set.defaults(aux.dir = paste0(getwd(), "/aux/"),
 \item{mod.name}{name of model ensemble (def: \code{"LENS"})}
 
 \item{base.name}{name of data product to be projected (def: \code{"ERA-INTERIM"})}
+
+\item{lat.clip, lon.clip}{if desired, a \code{c(min,max)} vector giving bounds for a lon/lat box; only data within this box will be loaded and processed}
 
 \item{base.year.range}{desired time frame of the "base" time period to project (def: \code{c(1979,2010)})}
 

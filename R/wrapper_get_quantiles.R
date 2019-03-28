@@ -251,8 +251,9 @@ estimate.quantiles <- function(defaults,log=T,
 	        params <- lapply(Raw,function(input.list) {
 	          cat("\n") #Insert newlines to add space between messages of different processing chunks
 	          cat(paste0("Processing lon = ",input.list$lon),fill=TRUE)
-	          get.quantiles(input.list$Raw,defaults$norm.x.df,defaults$bulk.x.df,
-	                        defaults$tail.x.df,defaults$q_bulk,defaults$q_tail,defaults$q_norm,
+	          get.quantiles(model.y=input.list$Raw,
+	          				norm.x.df=defaults$norm.x.df,bulk.x.df=defaults$bulk.x.df,tail.x.df=defaults$tail.x.df,
+	                        q_norm=defaults$q_norm,q_bulk=defaults$q_bulk,q_tail=defaults$q_tail,
 	                        year.range=defaults$mod.year.range,
 	                        norm.x=norm.x[base.idxs,],
 	                        bulk.x=bulk.x[base.idxs,],

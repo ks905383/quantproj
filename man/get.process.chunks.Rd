@@ -9,8 +9,10 @@ get.process.chunks(defaults, save.output = FALSE, search.dir = character(),
 }
 \arguments{
 \item{defaults}{the output from \code{\link{set.defaults}}. The defaults used
-are \code{filevar} and, if \code{search.dir=numeric()} (by default),
-\code{mod.data.dir}.}
+ are \code{filevar} and, if \code{search.dir=numeric()} (by default),
+ \code{mod.data.dir}. This program also supports subsets by latitude or 
+longitude, if \code{defaults$lat.clip} / \code{defaults$lon.clip} exist
+    (as \code{c(min,max)}, see below).}
 
 \item{save.output}{whether to save the file information as a file in the
 search directory (as "\code{process_inputs.RData}"), by default
@@ -43,10 +45,13 @@ processing subsections of the (very large) files at a time.
 \section{Expected File Structure}{
 
  In general, most common forms of climate file structures are supported, 
-	especially the CMIP5 structure. Variables can either be on a \code{lon x lat} 
-grid or stored by linear location. Files can either contain all runs of a model
-	or can be saved by run. Files can either contain the whole timeframe of a model
-run or be split up in consecutive temporal chunks. Furthermore:
+	especially the CMIP5 structure (for best results, filenames should still be 
+in CMIP5 format with an optional "\code{_[  ]}" suffix for regional subsets, 
+etc. - see the \code{\link{set.defaults}} documentation for more info). 
+ Variables can either be on a \code{lon x lat} grid or stored by linear 
+ location. Files can either contain all runs of a model or can be saved by run. 
+ Files can either contain the whole timeframe of a model run or be split up in 
+ consecutive temporal chunks. Furthermore:
  \describe{
    \item{filename}{the code searches for \emph{NetCDF} files using the search
      string "\code{[defaults$filevar]_day_.*nc}" (by default; this can be 
@@ -61,11 +66,28 @@ run or be split up in consecutive temporal chunks. Furthermore:
 	possible names for the "lat" dimension.}
    \item{locations}{The code expects there to be two location variables,
      \code{lat} and \code{lon} (CMIP5 syntax), giving the lat/lon location of
-      every pixel in the file. The names of those variables can be any of the
-		 alternatives given by \code{defaults$varnames}.}
+     every pixel in the file. The names of those variables can be any of the
+		alternatives given by \code{defaults$varnames} - e.g. out of the box,
+	the code also checks for "latitude", "longitude", etc. See \code{set.defaults}
+		for information on adding naming conventions.}
    \item{multiple runs}{If there are multiple runs in the file, there should
      be a \code{run} variable/dimension in the file giving the run id as an
      integer}
  }
+}
+
+\section{Subsetting by Latitude / Longitude Bounds}{
+
+	 If \code{defaults$lat.clip} and/or \code{defaults$lon.clip} exist, only 
+  information and file locations of pixels within those lat/lon bounds are 
+	 returned. \code{$lat.clip} and \code{$lon.clip} should be vectors of the 
+	 form \code{c(min,max)}, e.g. \code{defaults$lat.clip=c(23,52)}, 
+ \code{defaults$lon.clip=c(-125,-65)} for a box around the continental USA.
+	 Longitude coordinates can be entered either in a \code{[-180 180]} or in 
+	 a \code{[0 360]} format, regardless of the loading data's format - they'll
+	 be matched in format before subsetting. The \code{global.loc.idx} (used for
+  filenames) is \emph{unaffected} by the subsetting, meaning that the idx are still
+	 counted with regards to the full lat/lon universe. This allows an initial 
+  subset to be expanded without issues with output file structures.
 }
 
