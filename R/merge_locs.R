@@ -34,16 +34,18 @@ combine.locs <- function(defaults,comments=character()) {
   #------ Set Output Filename -------------------------------------------------
 	# Get better string filename summary for the projection base year choosing
 	if (defaults$index.type=="resampling_rep") {
-		proj.method <- "resample"
+		proj.method <- paste0("resample",defaults$resampling.timescale)
 		proj.desc <- paste0("resampling ",defaults$resampling.timescale," with replacement")
 	} else if (defaults$index.type=="resampling") {
-		proj.method <- paste0("resampling ",defaults$resampling.timescale," without replacement")
-		proj.desc <- "NoRepResample"
+		proj.method <- paste0("NoRepResample",defaults$resampling.timescale)
+		proj.desc <- paste0("resampling ",defaults$resampling.timescale," without replacement")
 	} else if (defaults$index.type=="raw") {
-		proj.method <- "projectby"
+		proj.method <- "projectraw"
 		proj.desc <- paste0("projecting ",defaults$resampling.timescale,"-by-",defaults$resampling.timescale," in order")
+	} else if (defaults$index.type=="raw_mean") {
+	  proj.method <- "projectbyavg"
+	  proj.desc <- paste0("projecting by the change in the quantiles averaged over the time periods")
 	}
-	proj.method<-paste0(proj.method,defaults$resampling.timescale)
 	# Set output filename
 	fn <- paste0(defaults$base.data.dir,"output/",
 		defaults$filevar,"_day_",defaults$base.name,
