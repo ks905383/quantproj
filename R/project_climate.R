@@ -179,9 +179,9 @@ if (all(is.nan(base.data))) {
         if (defaults$get.volc) {
             # Load basis file
             basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$base.year.range)+1,"years_1runs_",
-                paste0(defaults$base.norm.x.df,collapse="-"),
+                paste0(defaults$norm.x.df,collapse="-"),
                 "df_volc",gsub("\\.","-",round(volc.data$lat[which.min(abs(as.vector(volc.data$lat)-as.vector(process.inputs.tmp$lat)))],1)),".RData")
-            if (file.exists(basis.fn)) {load(basis.fn)} else { norm.x.base <- get.predictors(n_files=1,dfs=params$norm.x.df,year.range=params$year.range,get.volc=TRUE,lat=process.inputs.tmp$lat,save.predictors=T)}
+            if (file.exists(basis.fn)) {load(basis.fn)} else { norm.x <- get.predictors(n_files=1,dfs=params$norm.x.df,year.range=params$year.range,get.volc=TRUE,lat=process.inputs.tmp$lat,save.predictors=T)}
             rm(list=c("basis.fn"))
         } else {
             basis.fn <- paste0(defaults$aux.dir,"bases/spline_basis_functions_",diff(defaults$base.year.range)+1,"years_1runs_",paste0(params$norm.x.df,collapse="-"),"df.RData")

@@ -4,7 +4,8 @@
 \alias{combine.locs}
 \title{Re-merge quantile map projections}
 \usage{
-combine.locs(defaults, comments = character())
+combine.locs(defaults, comments = character(), output.type = "linear",
+  lat_vec = numeric(), lon_vec = numeric())
 }
 \arguments{
 \item{defaults}{the output from \code{\link{various_defaults}}}
@@ -12,6 +13,14 @@ combine.locs(defaults, comments = character())
 \item{comments}{if desired, a 'comments' global attribute will be
 added to the NetCDF file, with the string input to this
 option as the body}
+
+\item{output.type}{how the time series is exported into the netcdf file; either 
+    "linear" (default), as an [idx x time] array, or "grid," as a 
+[lon x lat x time] array}
+
+\item{lat_vec, lon_vec}{if \code{output.type=="grid"}, this allows the specification
+    of the output grid (useful if the projected data doesn't have values for 
+the whole global/etc. grid, or if you just want a subset)}
 }
 \description{
 Concatenate the individual projection files calculated through separate calls
