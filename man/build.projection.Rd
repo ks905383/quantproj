@@ -86,10 +86,11 @@ and the linear indices (in the base period) used a the reference
 year/days in the projected period (\code{base.idxs}). This list
 object is saved for each processing chunk in the
 "\code{[defaults$base.data.dir]/output/}" directory, under the
-filename: "\code{[filevar]_day_[base.name]_[mod.name]proj_[proj.method]_[proj.year.range]_locs[global_loc(1)-global_loc(end)].RData}",
+filename: "\code{[filevar]_day_[base.name]_[mod.name]proj_[proj.method]_[proj.year.range]_locs[global_loc(1)-global_loc(end)]([fn.suffix]).RData}",
 where \code{proj.method} is a quick shorthand for the projection
 method (set by \code{index.type} and \code{resampling.timescale}
-in \code{defaults}).
+in \code{defaults}), and \code{fn.suffix} is set by 
+\code{\link{set.defaults}}.
 }
 
 \section{On \code{\link{project.climate}} parameters}{

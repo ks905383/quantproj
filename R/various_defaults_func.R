@@ -39,6 +39,8 @@
 #' @param mod.data.dir the directory with raw model ensemble data used to project
 #' @param aux.dir directory for auxiliary files - saved basis functions, etc.
 #'
+#' @param fn.suffix optional add-on to all output filenames
+#'
 #' @param lat.clip,lon.clip if desired, a \code{c(min,max)} vector giving bounds for a lon/lat box; only data within this box will be loaded and processed
 #'
 #' @param filevar variable shorthand (CMIP5 syntax, def: \code{"tas"} for near-surface air temperature)
@@ -81,6 +83,8 @@ aux.dir=paste0(getwd(),"/aux/"),
 base.data.dir=paste0(getwd(),"/base_data/"),
 # The directory with raw model ensemble data
 mod.data.dir=paste0(getwd(),"/model_data/"),
+# A custom suffix for output files
+fn.suffix=character(),
 
 #----- VARIABLE -----
 # Variable shorthand (use CMIP5)

@@ -38,10 +38,11 @@
 #' year/days in the projected period (\code{base.idxs}). This list
 #' object is saved for each processing chunk in the
 #' "\code{[defaults$base.data.dir]/output/}" directory, under the
-#' filename: "\code{[filevar]_day_[base.name]_[mod.name]proj_[proj.method]_[proj.year.range]_locs[global_loc(1)-global_loc(end)].RData}",
+#' filename: "\code{[filevar]_day_[base.name]_[mod.name]proj_[proj.method]_[proj.year.range]_locs[global_loc(1)-global_loc(end)]([fn.suffix]).RData}",
 #' where \code{proj.method} is a quick shorthand for the projection
 #' method (set by \code{index.type} and \code{resampling.timescale}
-#' in \code{defaults}).
+#' in \code{defaults}), and \code{fn.suffix} is set by 
+#' \code{\link{set.defaults}}.
 #'
 #' @section On \code{\link{project.climate}} parameters:
 #'  Inputs to \code{\link{project.climate}} are governed through the
@@ -175,7 +176,7 @@ build.projection <- function(defaults,log=T,
 			if (defaults$bootstrapping) {
 				load.fn <- paste0(load.fn,"_",defaults$block.size,"block",defaults$nboots,"runs")
 			}
-			load.fn <- paste0(load.fn,".RData")
+			load.fn <- paste0(load.fn,defaults$fn.suffix,".RData")
 
 			# See if that filename exists/if those parameters have been calculated...
 			if (file.exists(load.fn)) {
@@ -202,7 +203,7 @@ build.projection <- function(defaults,log=T,
 					output.fn <- paste0(output.fn,"_",defaults$block.size,"block",defaults$nboots,"runs")
 				}
 
-				output.fn <- paste0(output.fn,".RData")
+				output.fn <- paste0(output.fn,defaults$fn.suffix,".RData")
 				rm(proj.method)
 
 

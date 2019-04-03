@@ -104,8 +104,8 @@ combine.locs <- function(defaults,comments=character(),output.type="linear",
 	output.map <- output.all; rm(list=c("output.all"))
 
 	# Save as .RData file
-	save(file=paste0(fn,".RData"),output.map)
-
+	save(file=paste0(fn,defaults$fn.suffix,".RData"),output.map)
+	print(paste0(fn,defaults$fn.suffix,".RData saved!"))
 
 	#------ Save as NetCDF file! -------------------------------------------------
 	# Get variables (all the messiness below is to make sure NaNs stay NaNs. I don't know why they're there, but that's a question for soon after)
@@ -133,10 +133,10 @@ combine.locs <- function(defaults,comments=character(),output.type="linear",
 		if (defaults$bootstrapping) {
 			# Uhhhhhh, i don't think this should be [locdim]...
 			#runid <- ncvar_def("run_id","id",locdim,NaN,longname="bootstrap run index",prec="integer")
-			ncout <- nc_create(paste0(fn,".nc"),list(lonv,latv,idxv,runid,tas))
+			ncout <- nc_create(paste0(fn,defaults$fn.suffix,".nc"),list(lonv,latv,idxv,runid,tas))
 		} else {
 			#ncout <- nc_create(paste0(fn,".nc"),list(latv,lonv,idxv,locv,tas))
-			ncout <- nc_create(paste0(fn,".nc"),list(lonv,latv,idxv,tas))
+			ncout <- nc_create(paste0(fn,defaults$fn.suffix,".nc"),list(lonv,latv,idxv,tas))
 		}
 
 		# Add variables
@@ -188,10 +188,10 @@ combine.locs <- function(defaults,comments=character(),output.type="linear",
 		if (defaults$bootstrapping) {
 			# Uhhhhhh, i don't think this should be [locdim]...
 			#runid <- ncvar_def("run_id","id",locdim,NaN,longname="bootstrap run index",prec="integer")
-			ncout <- nc_create(paste0(fn,".nc"),list(idxv,runid,locv,tas))
+			ncout <- nc_create(paste0(fn,defaults$fn.suffix,".nc"),list(idxv,runid,locv,tas))
 		} else {
 			#ncout <- nc_create(paste0(fn,".nc"),list(latv,lonv,idxv,locv,tas))
-			ncout <- nc_create(paste0(fn,".nc"),list(idxv,locv,tas))
+			ncout <- nc_create(paste0(fn,defaults$fn.suffix,".nc"),list(idxv,locv,tas))
 		}
 
 		# Add variables to netcdf file
@@ -224,6 +224,6 @@ combine.locs <- function(defaults,comments=character(),output.type="linear",
 	nc_close(ncout)
 
 	# Fin
-	print(paste0(fn," saved!"))
+	print(paste0(fn,defaults$fn.suffix,".nc saved!"))
 	invisible()
 }

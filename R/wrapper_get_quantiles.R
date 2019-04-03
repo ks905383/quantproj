@@ -154,7 +154,7 @@ estimate.quantiles <- function(defaults,log=T,
 	    output.fn <- paste0(output.fn,"_",defaults$block.size,"block",defaults$nboots,"runs")
 	  }
 
-	  output.fn <- paste0(output.fn,".RData")
+	  output.fn <- paste0(output.fn,defaults$fn.suffix,".RData")
 
 
 	  # Only process if the file doesn't already exist
