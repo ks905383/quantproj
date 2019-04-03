@@ -68,12 +68,14 @@ combine.locs <- function(defaults,comments=character(),output.type="linear",
 		file.list <- dir(path=paste0(defaults$base.data.dir,"output/"),
 					 paste0(defaults$filevar,"_day_",defaults$base.name,".*",
 					 		paste0(defaults$proj.year.range,collapse="-"),".*_",
-					 		defaults$block.size,"block",defaults$nboots,"runs.RData")
+					 		defaults$block.size,"block",defaults$nboots,"runs",
+					 		defaults$fn.suffix,".RData")
 					 )
 	} else {
 		file.list <- dir(path=paste0(defaults$base.data.dir,"output/"),
 					 paste0(defaults$filevar,"_day_",defaults$base.name,".*",
-					 		paste0(defaults$proj.year.range,collapse="-"),".*RData")
+					 		paste0(defaults$proj.year.range,collapse="-"),".*",
+					 		defaults$fn.suffix,".RData")
 					 )
 	}
 
