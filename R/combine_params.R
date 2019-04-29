@@ -44,7 +44,7 @@ combine.params <- function(defaults) {
   }
 
   # Remove duplicated latlon combinations
-  dup.idxs <- duplicated(cbind(unlist(list.select(params,lat)),unlist(list.select(params,lon))))
+  dup.idxs <- duplicated(cbind(unlist(list.select(params.all,lat)),unlist(list.select(params.all,lon))))
   params.all <- params.all[!dup.idxs]
   # Rename back to output.map
   params <- params.all; rm(list=c("params.all"))
