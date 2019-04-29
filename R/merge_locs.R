@@ -141,6 +141,22 @@ combine.locs <- function(defaults,comments=character(),output.type="linear",
 			ncout <- nc_create(paste0(fn,defaults$fn.suffix,".nc"),list(lonv,latv,idxv,tas))
 		}
 
+		# add global attributes (BEFORE ADDING THE MAIN DATA; WEIRD BUG IN NCDF4 OTHERWISE CAUSES ISSUES)
+		ncatt_put(ncout,0,"variable_short",defaults$filevar)
+		ncatt_put(ncout,0,"variable_long","Near-Surface Air Temperature")
+		ncatt_put(ncout,0,"frequency","day")
+		ncatt_put(ncout,0,"experiment",paste0(defaults$mod.name,"-projected"))
+		ncatt_put(ncout,0,"range",paste0(defaults$proj.year.range,collapse="-"))
+		ncatt_put(ncout,0,"model_id",defaults$base.name)
+		ncatt_put(ncout,0,"projection",paste0("Projected from ",paste0(defaults$base.year.range,collapse="-"),
+			" using day-by-day quantile maps from the ",defaults$mod.name," ensemble. "))
+		if (length(comments)>0) {
+		  ncatt_put(ncout,0,"comments",comments)
+		}
+		ncatt_put(ncout,0,"projection_method",proj.desc)
+		ncatt_put(ncout,0,"attribution","This file was created using the 'quantproj' code package by Kevin Schwarzwald based on methodology and code by Matz Haugen and Haugen et al. (2018).")
+
+
 		# Add variables
 		ncvar_put(ncout,latv,lat)
 		ncvar_put(ncout,lonv,lon)
@@ -196,6 +212,22 @@ combine.locs <- function(defaults,comments=character(),output.type="linear",
 			ncout <- nc_create(paste0(fn,defaults$fn.suffix,".nc"),list(idxv,locv,tas))
 		}
 
+		# add global attributes (BEFORE ADDING THE MAIN DATA; WEIRD BUG IN NCDF4 OTHERWISE CAUSES ISSUES)
+		ncatt_put(ncout,0,"variable_short",defaults$filevar)
+		ncatt_put(ncout,0,"variable_long","Near-Surface Air Temperature")
+		ncatt_put(ncout,0,"frequency","day")
+		ncatt_put(ncout,0,"experiment",paste0(defaults$mod.name,"-projected"))
+		ncatt_put(ncout,0,"range",paste0(defaults$proj.year.range,collapse="-"))
+		ncatt_put(ncout,0,"model_id",defaults$base.name)
+		ncatt_put(ncout,0,"projection",paste0("Projected from ",paste0(defaults$base.year.range,collapse="-"),
+			" using day-by-day quantile maps from the ",defaults$mod.name," ensemble. "))
+		if (length(comments)>0) {
+		  ncatt_put(ncout,0,"comments",comments)
+		}
+		ncatt_put(ncout,0,"projection_method",proj.desc)
+		ncatt_put(ncout,0,"attribution","This file was created using the 'quantproj' code package by Kevin Schwarzwald based on methodology and code by Matz Haugen and Haugen et al. (2018).")
+
+
 		# Add variables to netcdf file
 		ncvar_put(ncout,idxv,base.idxs)
 		ncvar_put(ncout,locv,global_loc_out)
@@ -206,21 +238,6 @@ combine.locs <- function(defaults,comments=character(),output.type="linear",
 	} else {
 		error(paste0("output type '",output.type,"' unrecognized"))
 	}
-
-	# add global attributes
-	ncatt_put(ncout,0,"variable_short",defaults$filevar)
-	ncatt_put(ncout,0,"variable_long","Near-Surface Air Temperature")
-	ncatt_put(ncout,0,"frequency","day")
-	ncatt_put(ncout,0,"experiment",paste0(defaults$mod.name,"-projected"))
-	ncatt_put(ncout,0,"range",paste0(defaults$proj.year.range,collapse="-"))
-	ncatt_put(ncout,0,"model_id",defaults$base.name)
-	ncatt_put(ncout,0,"projection",paste0("Projected from ",paste0(defaults$base.year.range,collapse="-"),
-		" using day-by-day quantile maps from the ",defaults$mod.name," ensemble. "))
-	if (length(comments)>0) {
-	  ncatt_put(ncout,0,"comments",comments)
-	}
-	ncatt_put(ncout,0,"projection_method",proj.desc)
-	ncatt_put(ncout,0,"attribution","This file was created using the 'quantproj' code package by Kevin Schwarzwald based on methodology and code by Matz Haugen and Haugen et al. (2018).")
 
 	# close the file, writing data to disk
 	nc_close(ncout)
