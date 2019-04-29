@@ -33,7 +33,7 @@ combine.params <- function(defaults) {
                    pattern=fn.search.pattern)
 
   # Load and concatenate files
-  
+  params.all <- list()
   for (filen in file.list) {
     # Load output
     load(paste0(defaults$mod.data.dir,"params/",filen))

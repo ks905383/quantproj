@@ -28,7 +28,7 @@
 #' @param base.years the base years to average over (i.e. \code{seq(1979,2010)})
 #' @param future.years the future years to average over (i.e. \code{seq(2058,2099)})
 #' @param load.fn the file containing the quantile fit coefficients. If left empty,
-#'   it will look for the output file of \code{\link{combine.locs}}, which concantenates the output of with data from
+#'   it will look for the output file of \code{\link{combine.params}}, which concantenates the output of with data from
 #'   \code{\link{estimate.quantiles}}.
 #'
 #' @importFrom tictoc tic toc
@@ -119,13 +119,6 @@ get.quantile.changes <- function(defaults,
 
     # Create netcdf file
     ncout <- nc_create(paste0(fn,".nc"),list(latv,lonv,qs,qchange))
-
-    # Add variables to netcdf file
-    ncvar_put(ncout,latv,lat)
-    ncvar_put(ncout,lonv,lon)
-    ncvar_put(ncout,qs,q_all)
-    ncvar_put(ncout,qchange,quantile_changes)
-
     # add global attributes
     ncatt_put(ncout,0,"variable_short","taschg")
     ncatt_put(ncout,0,"variable_long","change in temperature in doy quantile")
@@ -135,6 +128,12 @@ get.quantile.changes <- function(defaults,
     ncatt_put(ncout,0,"comments",paste0("Difference in quantiles; day-of-year mean across ",paste0(min(future.years),"-",max(future.years)),
       " vs.  day-of-year mean across ",paste0(min(base.years),"-",max(base.years))))
     ncatt_put(ncout,0,"attribution","This file was created using the 'quantile mapping' code package by Kevin Schwarzwald based on methodology and code by Matz Haugen and Haugen et al. (2018).")
+
+    # Add variables to netcdf file
+    ncvar_put(ncout,latv,lat)
+    ncvar_put(ncout,lonv,lon)
+    ncvar_put(ncout,qs,q_all)
+    ncvar_put(ncout,qchange,quantile_changes)
 
     # close the file, writing data to disk
     nc_close(ncout)
