@@ -18,7 +18,7 @@ combine.params <- function(defaults) {
                       defaults$filevar,"_day_",defaults$mod.name,
                       "_quantfit_params_",
                       paste0(defaults$mod.year.range,collapse="-"),
-                      "_alllocs.RData")
+                      "_alllocs")
 
   # Find coefficient files
   fn.search.pattern <- paste0(defaults$filevar,

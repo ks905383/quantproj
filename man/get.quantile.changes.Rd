@@ -4,20 +4,32 @@
 \alias{get.quantile.changes}
 \title{Get changes in estimated quantiles}
 \usage{
-get.quantile.changes(defaults, export.nc = T, base.years, future.years,
-  load.fn = character())
+get.quantile.changes(defaults, export.nc = T, output.type = "grid",
+  lon_vec = numeric(), lat_vec = numeric(), comment = character(),
+  base.years, future.years, load.fn = character())
 }
 \arguments{
 \item{defaults}{the output of \code{set.defaults}}
 
 \item{export.nc}{whether to directly save the output in a NetCDF file}
 
+\item{output.type}{if saving output in a NetCDF file, sets whether the variable
+is "linear" ([loc x quantile x day of year]) or "grid" (by default; 
+[lon x lat x quantile x day of year]; pixels without data will be NAs)}
+
+\item{lon_vec, lat_vec}{if saving output in a NetCDF file as a "grid", 
+these will manually set the [lon] and [lat] vectors to use as a basis. 
+Especially useful if there are lat or lon gaps in the original data.}
+
+\item{comment}{if saving output in a NetCDF file, this inputs an extra global
+attribute, 'comments_2', with the contents of the variable.}
+
 \item{base.years}{the base years to average over (i.e. \code{seq(1979,2010)})}
 
 \item{future.years}{the future years to average over (i.e. \code{seq(2058,2099)})}
 
 \item{load.fn}{the file containing the quantile fit coefficients. If left empty,
-it will look for the output file of \code{\link{combine.locs}}, which concantenates the output of with data from
+it will look for the output file of \code{\link{combine.params}}, which concantenates the output of with data from
 \code{\link{estimate.quantiles}}.}
 }
 \description{
@@ -37,10 +49,12 @@ Duplicate locations are removed from the final output.
 
  If \code{export.nc=TRUE}, the quantile changes are saved to a NetCDF file.
  The main variable, "\code{d[defaults$filevar]}", is a \code{[loc x quantile
- x day of year]} array. \code{lat}, \code{lon}, and \code{q}/quantile are also
- saved. The day of year is just an index \code{1:365}. A few extra global
- attributes are included, and an additional "comment" attribute can be added
- to the NetCDF file using the \code{comment} parameter.
+ x day of year]} array if \code{output.type=="linear"} and a 
+ \code{[lon x lat x quantile x day of year]} array if \code{output.type=="grid"}, 
+ with missing pixels filled with NAs. \code{lat}, \code{lon}, and 
+ \code{q}/quantile are also saved. The day of year is just an index \code{1:365}. 
+ A few extra global attributes are included, and an additional "comment" attribute c
+ an be added to the NetCDF file using the \code{comment} parameter.
 
  The NetCDF file is saved in \code{defaults$mod.data.dir} with the name:
  d[filevar]_day_[mod.name]_qchange_[base.year[1]-base.year[end]]_[future.year[1]-future.year[end]].nc

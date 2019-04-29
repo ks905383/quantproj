@@ -15,16 +15,26 @@
 #' @section NetCDF output structure:
 #'  If \code{export.nc=TRUE}, the quantile changes are saved to a NetCDF file.
 #'  The main variable, "\code{d[defaults$filevar]}", is a \code{[loc x quantile
-#'  x day of year]} array. \code{lat}, \code{lon}, and \code{q}/quantile are also
-#'  saved. The day of year is just an index \code{1:365}. A few extra global
-#'  attributes are included, and an additional "comment" attribute can be added
-#'  to the NetCDF file using the \code{comment} parameter.
+#'  x day of year]} array if \code{output.type=="linear"} and a 
+#'  \code{[lon x lat x quantile x day of year]} array if \code{output.type=="grid"}, 
+#'  with missing pixels filled with NAs. \code{lat}, \code{lon}, and 
+#'  \code{q}/quantile are also saved. The day of year is just an index \code{1:365}. 
+#'  A few extra global attributes are included, and an additional "comment" attribute c
+#'  an be added to the NetCDF file using the \code{comment} parameter.
 #'
 #'  The NetCDF file is saved in \code{defaults$mod.data.dir} with the name:
 #'  d[filevar]_day_[mod.name]_qchange_[base.year[1]-base.year[end]]_[future.year[1]-future.year[end]].nc
 #'
 #' @param defaults the output of \code{set.defaults}
 #' @param export.nc whether to directly save the output in a NetCDF file
+#' @param output.type if saving output in a NetCDF file, sets whether the variable
+#'   is "linear" ([loc x quantile x day of year]) or "grid" (by default; 
+#'   [lon x lat x quantile x day of year]; pixels without data will be NAs)
+#' @param lon_vec,lat_vec if saving output in a NetCDF file as a "grid", 
+#'   these will manually set the [lon] and [lat] vectors to use as a basis. 
+#'   Especially useful if there are lat or lon gaps in the original data. 
+#' @param comment if saving output in a NetCDF file, this inputs an extra global
+#'   attribute, 'comments_2', with the contents of the variable.
 #' @param base.years the base years to average over (i.e. \code{seq(1979,2010)})
 #' @param future.years the future years to average over (i.e. \code{seq(2058,2099)})
 #' @param load.fn the file containing the quantile fit coefficients. If left empty,
@@ -40,7 +50,9 @@
 # (I want to add an 'export as grid' function....)
 
 get.quantile.changes <- function(defaults,
-                             export.nc=T,
+                             export.nc=T,output.type="grid",
+                             lon_vec=numeric(),lat_vec=numeric(),
+                             comment=character(),
                              base.years,future.years,
                              load.fn=character()) {
 
@@ -98,43 +110,93 @@ get.quantile.changes <- function(defaults,
 
   if (export.nc) {
     # Set export filename
-    fn <- paste0(defaults$mod.data.dir,"d",defaults$filevar,
+    fn <- paste0(c(paste0(defaults$mod.data.dir,"d",defaults$filevar),
                "day",defaults$mod.name,
                "qchange",
-               paste0(defaults$base.year.range,collapse = "-"),
-               min(future.years),"-",max(future.years),collapse="_")
+               paste0(min(future.years),"-",max(future.years)),
+               paste0(min(base.years),"-",max(base.years))),collapse="_")
 
-    # Dimensions
-    latdim <- ncdim_def("lat","deg",lat)
-    londim <- ncdim_def("lon","deg",lon)
-    locdim <- ncdim_def("loc","idx",1:length(lon),longname="location index")
-    qdim <- ncdim_def("quantile","q",q_all)
-    timedim <- ncdim_def("time","days",1:365,calendar="noleap")
+    if (output.type=="linear") {
+      # Dimensions
+      latdim <- ncdim_def("lat","deg",lat)
+      londim <- ncdim_def("lon","deg",lon)
+      locdim <- ncdim_def("loc","idx",1:length(lon),longname="location index")
+      qdim <- ncdim_def("quantile","q",q_all)
+      timedim <- ncdim_def("time","days",1:365,calendar="noleap")
 
-    # Variables
-    qchange <- ncvar_def(paste0("d",defaults$filevar),"K",list(locdim,qdim,timedim),NaN,longname="Change in Near-Surface Air Temperature in doy quantile",prec="double")
-    latv <- ncvar_def("lat","deg",locdim,NaN,longname="latitude",prec="double")
-    lonv <- ncvar_def("lon","deg",locdim,NaN,longname="longitude",prec="double")
-    qs <- ncvar_def("quantile","q",qdim,NaN,longname="quantile",prec="double")
+      # Variables
+      qchange <- ncvar_def(paste0("d",defaults$filevar),"K",list(locdim,qdim,timedim),NaN,longname="Change in Near-Surface Air Temperature in doy quantile",prec="double")
+      latv <- ncvar_def("lat","deg",locdim,NaN,longname="latitude",prec="double")
+      lonv <- ncvar_def("lon","deg",locdim,NaN,longname="longitude",prec="double")
+      qs <- ncvar_def("quantile","q",qdim,NaN,longname="quantile",prec="double")
 
-    # Create netcdf file
-    ncout <- nc_create(paste0(fn,".nc"),list(latv,lonv,qs,qchange))
-    # add global attributes
-    ncatt_put(ncout,0,"variable_short","taschg")
-    ncatt_put(ncout,0,"variable_long","change in temperature in doy quantile")
-    ncatt_put(ncout,0,"frequency","day")
-    ncatt_put(ncout,0,"range",paste0(min(future.years),"-",max(future.years))," (mean) - ",paste0(min(base.years),"-",max(base.years))," (mean)")
-    ncatt_put(ncout,0,"model_id",defaults$mod.name)
-    ncatt_put(ncout,0,"comments",paste0("Difference in quantiles; day-of-year mean across ",paste0(min(future.years),"-",max(future.years)),
-      " vs.  day-of-year mean across ",paste0(min(base.years),"-",max(base.years))))
-    ncatt_put(ncout,0,"attribution","This file was created using the 'quantile mapping' code package by Kevin Schwarzwald based on methodology and code by Matz Haugen and Haugen et al. (2018).")
+      # Create netcdf file
+      ncout <- nc_create(paste0(fn,".nc"),list(latv,lonv,qchange))
+      # add global attributes
+      ncatt_put(ncout,0,"variable_short","taschg")
+      ncatt_put(ncout,0,"variable_long","change in temperature in doy quantile")
+      ncatt_put(ncout,0,"frequency","day")
+      ncatt_put(ncout,0,"range",paste0(min(future.years),"-",max(future.years))," (mean) - ",paste0(min(base.years),"-",max(base.years))," (mean)")
+      ncatt_put(ncout,0,"model_id",defaults$mod.name)
+      ncatt_put(ncout,0,"comments",paste0("Difference in quantiles; day-of-year mean across ",paste0(min(future.years),"-",max(future.years)),
+        " vs.  day-of-year mean across ",paste0(min(base.years),"-",max(base.years))))
+      if (length(comment)>0){
+        ncatt_put(ncout,0,"comments_2",comment)
+      }
+      ncatt_put(ncout,0,"attribution","This file was created using the 'quantile mapping' code package by Kevin Schwarzwald based on methodology and code by Matz Haugen and Haugen et al. (2018).")
 
-    # Add variables to netcdf file
-    ncvar_put(ncout,latv,lat)
-    ncvar_put(ncout,lonv,lon)
-    ncvar_put(ncout,qs,q_all)
-    ncvar_put(ncout,qchange,quantile_changes)
+      # Add variables to netcdf file
+      ncvar_put(ncout,latv,lat)
+      ncvar_put(ncout,lonv,lon)
+      ncvar_put(ncout,qchange,quantile_changes)
 
+    } else if (output.type=="grid") {
+      # Get the grid vectors (ignores gaps - so if there are pixels with lat = 1 2 5 6, 
+      # the vector will be c(1 2 5 6))
+      if (length(lon_vec)==0) {lon_vec <- sort(unique(lon))}
+      if (length(lat_vec)==0) {lat_vec <- sort(unique(lat))}
+    
+
+      if (max(diff(lat_vec))/median(unique(diff(lat_vec)))>2 || max(diff(lon_vec))/median(unique(diff(lon_vec)))>2) {
+        warning("grid may be discontinuous (not every lat or lon value is sequential); suggest inputting target grid using the lon_vec and lat_vec options")
+      }
+
+      # Assign the values from the original [Raw] vector to the grid, by longitude band
+      qchange_out <- array(data=NA,c(length(lon_vec),length(lat_vec),dim(quantile_changes)[2:3]))
+      for (lon_idx in 1:length(lon_vec)) {
+        match.idx <- match(lat_vec,lat[which(lon==lon_vec[lon_idx])])
+        # This includes support for the ordering in lat_vec being different than in lat
+        qchange_out[lon_idx,which(!is.na(match.idx)),,] <- quantile_changes[which(lon==lon_vec[lon_idx])[match.idx[!is.na(match.idx)]],,]
+      }
+      quantile_changes <- qchange_out; rm(qchange_out)
+
+      # Dimensions
+      latdim <- ncdim_def("lat","deg",lat_vec)
+      londim <- ncdim_def("lon","deg",lon_vec)
+      qdim <- ncdim_def("quantile","q",q_all)
+      timedim <- ncdim_def("time","days",1:365,calendar="noleap")
+
+      # Variables
+      qchange <- ncvar_def(paste0("d",defaults$filevar),"K",list(londim,latdim,qdim,timedim),NaN,longname="Change in Near-Surface Air Temperature in doy quantile",prec="double")
+      
+      # Create netcdf file
+      ncout <- nc_create(paste0(fn,".nc"),list(qchange))
+      # add global attributes
+      ncatt_put(ncout,0,"variable_short","taschg")
+      ncatt_put(ncout,0,"variable_long","change in temperature in doy quantile")
+      ncatt_put(ncout,0,"frequency","day")
+      ncatt_put(ncout,0,"range",paste0(min(future.years),"-",max(future.years)," (mean) - ",paste0(min(base.years),"-",max(base.years)," (mean)")))
+      ncatt_put(ncout,0,"model_id",defaults$mod.name)
+      ncatt_put(ncout,0,"comments",paste0("Difference in quantiles; day-of-year mean across ",paste0(min(future.years),"-",max(future.years)),
+        " vs.  day-of-year mean across ",paste0(min(base.years),"-",max(base.years))))
+      if (length(comment)>0){
+        ncatt_put(ncout,0,"comments_2",comment)
+      }
+      ncatt_put(ncout,0,"attribution","This file was created using the 'quantile mapping' code package by Kevin Schwarzwald based on methodology and code by Matz Haugen and Haugen et al. (2018).")
+
+      # Add variables to netcdf file
+      ncvar_put(ncout,qchange,quantile_changes)
+    }
     # close the file, writing data to disk
     nc_close(ncout)
   }
