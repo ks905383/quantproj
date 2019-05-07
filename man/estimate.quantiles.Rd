@@ -5,7 +5,7 @@
 \title{Estimate quantiles of a climate time series}
 \usage{
 estimate.quantiles(defaults, log = T, max.runtime = 4 * 60 * 60,
-  assumed.avg.processing.time = 160)
+  assumed.avg.processing.time = 160, process.inputs = list())
 }
 \arguments{
 \item{defaults}{the output from \code{\link{set.defaults}}, used to set input
@@ -17,20 +17,32 @@ are (using run start time):
 \code{estimate_quantiles_run_YYYY-MM-DD_HH-MM-SS.txt}.}
 
 \item{max.runtime}{if batch processing on a server with a maximum allocated
-runtime, you can set it here, and the run will stop when the next block of
-time might take longer to run than the remaining allocated time. This
-prevents empty, un-processed temporary output files from preventing the
-complete processing of all data 'blocks'. Explicitly, the next block isn't
-processed and the function run is interrupted if the current system time if
-\code{start.time + max.runtime - Sys.time() < (2 * 160)*[num pixels in
-block] seconds}, assuming that it takes roughly 160 seconds per pixel to
-run this code (for 40 runs, 121 years of data, on the server this code was
-written on etc.); this time assumption can be changed with the
-\code{assumed.avg.processing.time} option, detailed below.}
+ runtime, you can set it here, and the run will stop when the next block of
+ time might take longer to run than the remaining allocated time. This
+ prevents empty, un-processed temporary output files from preventing the
+ complete processing of all data 'blocks'. Explicitly, the next block isn't
+ processed and the function run is interrupted if the current system time if
+ \code{start.time + max.runtime - Sys.time() < (2 * 160)*[num pixels in
+ block] seconds}, assuming that it takes roughly 160 seconds per pixel to
+ run this code (for 40 runs, 121 years of data, on the server this code was
+ written on etc.); this time assumption can be changed with the
+ \code{assumed.avg.processing.time} option, detailed below. Set to 0 if 
+you don't want this feature interefering.}
 
 \item{assumed.avg.processing.time}{by default 160 (seconds), the estimated
 processing time per pixel. Used in interrupting batch run if time is
 running out.}
+
+\item{process.inputs}{add custom process.inputs list. By default, the code
+    attempts to load [defaults$mod.data.dir]/process_inputs.RData or tries to
+generate its own using \code{get.process.chunks}. If this is not desired 
+(i.e. you want to just process a subset of process chunks), put a 
+subsetted output of \code{get.process.chunks} here , or make your own - 
+    just make sure that it's a list of process chunks, with every element 
+    containing at least the fields [global_loc] (used to load the correct
+[params] file), [lat] (just one lat, by lat band), [lon] (all the lon
+ values desired), and [fn] (the raw data filename from which the params
+ were calculated).}
 }
 \value{
 Nothing. Output is saved instead.

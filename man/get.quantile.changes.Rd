@@ -5,7 +5,7 @@
 \title{Get changes in estimated quantiles}
 \usage{
 get.quantile.changes(defaults, export.nc = T, output.type = "grid",
-  lon_vec = numeric(), lat_vec = numeric(), comment = character(),
+  lon_vec = numeric(), lat_vec = numeric(), comments = character(),
   base.years, future.years, load.fn = character())
 }
 \arguments{
@@ -21,7 +21,7 @@ is "linear" ([loc x quantile x day of year]) or "grid" (by default;
 these will manually set the [lon] and [lat] vectors to use as a basis. 
 Especially useful if there are lat or lon gaps in the original data.}
 
-\item{comment}{if saving output in a NetCDF file, this inputs an extra global
+\item{comments}{if saving output in a NetCDF file, this inputs an extra global
 attribute, 'comments_2', with the contents of the variable.}
 
 \item{base.years}{the base years to average over (i.e. \code{seq(1979,2010)})}

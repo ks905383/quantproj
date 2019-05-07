@@ -373,7 +373,9 @@ if (all(is.nan(base.data))) {
     # For the days in the data to be projected that are beyond the lowest
     # or highest extreme quantiles, scale the data by the change in that
     # lowest or highest quantile from the first year, to the final year
-    edge.idxs <- is.element(q_idxs,c(1,length(params$q_all)))
+    #edge.idxs <- is.element(q_idxs,c(1,length(params$q_all)))
+    edge.idxs <- c(which(coredata(base.data)[base.idxs]<q_full_i[,1]),
+                    which(q_idxs==length(params$q_all)))
     base.dq[edge.idxs] <- as.numeric(base.data)[base.idxs[edge.idxs]] + 
                           q_full_f[cbind(which(edge.idxs),q_idxs[edge.idxs])] -
                           q_full_i[cbind(which(edge.idxs),q_idxs[edge.idxs])]

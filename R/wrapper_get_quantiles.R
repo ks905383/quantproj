@@ -53,6 +53,16 @@
 #'   \code{[defaults$aux.data.dir]/run_logs/}. By default, true. Log filenames
 #'   are (using run start time):
 #'   \code{estimate_quantiles_run_YYYY-MM-DD_HH-MM-SS.txt}.
+#' @param process.inputs add custom process.inputs list. By default, the code
+#' 	 attempts to load [defaults$mod.data.dir]/process_inputs.RData or tries to
+#'	 generate its own using \code{get.process.chunks}. If this is not desired 
+#'	 (i.e. you want to just process a subset of process chunks), put a 
+#'	 subsetted output of \code{get.process.chunks} here , or make your own - 
+#' 	 just make sure that it's a list of process chunks, with every element 
+#' 	 containing at least the fields [global_loc] (used to load the correct
+#'	 [params] file), [lat] (just one lat, by lat band), [lon] (all the lon
+#'   values desired), and [fn] (the raw data filename from which the params
+#'   were calculated).
 #' @param max.runtime if batch processing on a server with a maximum allocated
 #'   runtime, you can set it here, and the run will stop when the next block of
 #'   time might take longer to run than the remaining allocated time. This
@@ -63,7 +73,8 @@
 #'   block] seconds}, assuming that it takes roughly 160 seconds per pixel to
 #'   run this code (for 40 runs, 121 years of data, on the server this code was
 #'   written on etc.); this time assumption can be changed with the
-#'   \code{assumed.avg.processing.time} option, detailed below.
+#'   \code{assumed.avg.processing.time} option, detailed below. Set to 0 if 
+#'	 you don't want this feature interefering.
 #' @param assumed.avg.processing.time by default 160 (seconds), the estimated
 #'   processing time per pixel. Used in interrupting batch run if time is
 #'   running out.
@@ -78,7 +89,8 @@
 
 
 estimate.quantiles <- function(defaults,log=T,
-							   max.runtime=4*60*60,assumed.avg.processing.time=160) {
+							   max.runtime=4*60*60,assumed.avg.processing.time=160,
+							   process.inputs=list()) {
 
 	# ----- SETUP  ----------------------------------------------------------------------
 	# Set server-allocated wall time, to cancel jobs when it gets
@@ -94,10 +106,12 @@ estimate.quantiles <- function(defaults,log=T,
 
 	# Load process inputs (lists of inputs / filepaths / etc.
 	# necessary to run qmapping procedure)
-	if (file.exists(paste0(defaults$mod.data.dir,"process_inputs.RData"))) {
-		load(paste0(defaults$mod.data.dir,"process_inputs.RData"))
-	} else {
-		process.inputs <- get.process.chunks(defaults,save.output=TRUE,search.dir=defaults$mod.data.dir)
+	if (length(process.inputs)==0){
+		if (file.exists(paste0(defaults$mod.data.dir,"process_inputs.RData"))) {
+			load(paste0(defaults$mod.data.dir,"process_inputs.RData"))
+		} else {
+			process.inputs <- get.process.chunks(defaults,save.output=TRUE,search.dir=defaults$mod.data.dir)
+		}
 	}
 	
 
@@ -164,7 +178,7 @@ estimate.quantiles <- function(defaults,log=T,
 	    # if the time elapsed since the start of the run is more than 2 x the
 	    # average processing time expected for the number of pixels in this run
 	    # (assuming ~160 seconds / pixel)
-	    if (difftime(Sys.time(),start.time,units="secs") < (max.runtime)-2*assumed.avg.processing.time*length(process.inputs.tmp$global_loc)) {
+	    if (max.runtime==0 || difftime(Sys.time(),start.time,units="secs") < (max.runtime)-2*assumed.avg.processing.time*length(process.inputs.tmp$global_loc)) {
 
 	      # Save a placeholder file in the directory; to make sure no
 	      # double-processing happens
