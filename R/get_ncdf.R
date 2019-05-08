@@ -192,7 +192,8 @@ get.ncdf <- function(defaults,process.inputs.tmp,year.range=numeric()) {
           rm(list=c("Raw_file","dimx"))
 
           # Get lat lon (only need to do it once)
-          if (fn==process.inputs.tmp$fn[1] && subset.id==1) {
+          #if (fn==process.inputs.tmp$fn[1] && subset.id==1) {
+          if (fn==process.inputs.tmp$fn[1]) {
             # Allow for multiple conventions for each of the dimensions (set by the defaults$varnames list)
             dim.list.all.f <- unique(c(names(ncdata$dim),names(ncdata$var)))
 

@@ -70,7 +70,8 @@
 #'   block] seconds}, assuming that it takes roughly 160 seconds per pixel to
 #'   run this code (for 40 runs, 121 years of data, on the server this code was
 #'   written on etc.); this time assumption can be changed with the
-#'   \code{assumed.avg.processing.time} option, detailed below.
+#'   \code{assumed.avg.processing.time} option, detailed below. Set to 0 if 
+#'	 you don't want this feature interefering.
 #' @param assumed.avg.processing.time by default 5 (seconds), the estimated
 #'   processing time per pixel. Used in interrupting batch run if time is
 #'   running out.
@@ -214,7 +215,7 @@ build.projection <- function(defaults,log=T,
 					# seeing if the time elapsed since the start of the run is more than
 					# 2 x the average processing time expected for the number of pixels
 					# in this run (assuming ~160 seconds / pixel)
-					if ((!defaults$bootstrapping && difftime(Sys.time(),start.time,units="secs") < (max.runtime)-2*assumed.avg.processing.time*length(process.inputs.tmp$global_loc)) ||
+					if (max.runtime==0 || (!defaults$bootstrapping && difftime(Sys.time(),start.time,units="secs") < (max.runtime)-2*assumed.avg.processing.time*length(process.inputs.tmp$global_loc)) ||
 						(difftime(Sys.time(),start.time,units="secs") < (max.runtime)-2*assumed.avg.processing.time*length(process.inputs.tmp$global_loc*defaults$nboots))) {
 
 						# Save a placeholder file in the directory; to make sure no

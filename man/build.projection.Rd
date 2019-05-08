@@ -17,16 +17,17 @@ are (using run start time):
 \code{estimate_quantiles_run_YYYY-MM-DD_HH-MM-SS.txt}.}
 
 \item{max.runtime}{if batch processing on a server with a maximum allocated
-runtime, you can set it here, and the run will stop when the next block of
-time might take longer to run than the remaining allocated time. This
-prevents empty, un-processed temporary output files from preventing the
-complete processing of all data 'blocks'. Explicitly, the next block isn't
-processed and the function run is interrupted if the current system time if
-\code{start.time + max.runtime - Sys.time() < (2 * 160) * [num pixels in
-block] seconds}, assuming that it takes roughly 160 seconds per pixel to
-run this code (for 40 runs, 121 years of data, on the server this code was
-written on etc.); this time assumption can be changed with the
-\code{assumed.avg.processing.time} option, detailed below.}
+ runtime, you can set it here, and the run will stop when the next block of
+ time might take longer to run than the remaining allocated time. This
+ prevents empty, un-processed temporary output files from preventing the
+ complete processing of all data 'blocks'. Explicitly, the next block isn't
+ processed and the function run is interrupted if the current system time if
+ \code{start.time + max.runtime - Sys.time() < (2 * 160) * [num pixels in
+ block] seconds}, assuming that it takes roughly 160 seconds per pixel to
+ run this code (for 40 runs, 121 years of data, on the server this code was
+ written on etc.); this time assumption can be changed with the
+ \code{assumed.avg.processing.time} option, detailed below. Set to 0 if 
+you don't want this feature interefering.}
 
 \item{assumed.avg.processing.time}{by default 5 (seconds), the estimated
 processing time per pixel. Used in interrupting batch run if time is
