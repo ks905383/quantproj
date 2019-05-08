@@ -36,16 +36,23 @@
 #'  bootstrapping.
 #'
 #' @section On processing efficiency:
-#' \code{estimate.quantiles} does not explicitly support parallel processing
-#' \strong{within} the function (various \code{mclapply} instances were tried
-#' without promising results). \strong{However}, the creation of temporary
-#' output files at the start of processing and built-in testing for the
-#' existance of the output files means that this function can be called from
-#' multiple instances of R (for example in running in batch) without overwriting
-#' work done by other instances.
+#' 	\code{estimate.quantiles} does not explicitly support parallel processing
+#' 	\strong{within} the function (various \code{mclapply} instances were tried
+#' 	without promising results). \strong{However}, the creation of temporary
+#' 	output files at the start of processing and built-in testing for the
+#' 	existance of the output files means that this function can be called from
+#' 	multiple instances of R (for example in running in batch) without overwriting
+#' 	work done by other instances.
 #'
-#' This is the most computationally-intensive step in the
-#' package.
+#' 	This is the most computationally-intensive step in the
+#' 	package.
+#'
+#' @section WARNING WHEN BOOTSTRAPPING: 
+#'	The loaded model data is copied \code{nboots} times within this code if 
+#'	\code{defaults$bootstrapping=T}. Make sure to reduce the size of processing
+#' 	chunks when running with bootstrapping turned on to reduce the risk of 
+#'	memory issues... (some future version of this code may have a more 
+#'	sophisticated treatment of this issue)
 #'
 #' @param defaults the output from \code{\link{set.defaults}}, used to set input
 #'   parameters (see Section "On \code{get.quantiles} parameters," below)
@@ -157,7 +164,7 @@ estimate.quantiles <- function(defaults,log=T,
 	                     defaults,
 	                     bulk.x,tail.x,norm.x=numeric(),
 	                     max.runtime,assumed.avg.processing.time) {
-
+		
 	  output.fn <- paste0(defaults$mod.data.dir,"params/",defaults$filevar,
 	                      "_day_",defaults$mod.name,"_quantfit_params_",
 	                      defaults$mod.year.range[1],"-",defaults$mod.year.range[2],"_locs",
@@ -178,7 +185,11 @@ estimate.quantiles <- function(defaults,log=T,
 	    # if the time elapsed since the start of the run is more than 2 x the
 	    # average processing time expected for the number of pixels in this run
 	    # (assuming ~160 seconds / pixel)
-	    if (max.runtime==0 || difftime(Sys.time(),start.time,units="secs") < (max.runtime)-2*assumed.avg.processing.time*length(process.inputs.tmp$global_loc)) {
+	    if (max.runtime==0 || 
+	    	difftime(Sys.time(),start.time,units="secs") < 
+	    		(max.runtime)-
+	    		1.2*mean(assumed.avg.processing.time)*length(process.inputs.tmp$global_loc)*
+	    			max(1,defaults$bootstrapping*defaults$nboots)) {
 
 	      # Save a placeholder file in the directory; to make sure no
 	      # double-processing happens
@@ -264,7 +275,11 @@ estimate.quantiles <- function(defaults,log=T,
 	        # ----- ESTIMATE DATA USING GET.QUANTILES ---------------------------------
 	        params <- lapply(Raw,function(input.list) {
 	          cat("\n") #Insert newlines to add space between messages of different processing chunks
-	          cat(paste0("Processing lon = ",input.list$lon),fill=TRUE)
+	          if (defaults$bootstrapping) {
+					cat(paste0("Processing lon = ",input.list$lon,", run ",input.list$params$run.idx),fill=TRUE)
+			  } else {
+					cat(paste0("Processing lon = ",input.list$lon),fill=TRUE)
+			  }
 	          get.quantiles(model.y=input.list$Raw,
 	          				norm.x.df=defaults$norm.x.df,bulk.x.df=defaults$bulk.x.df,tail.x.df=defaults$tail.x.df,
 	                        q_norm=defaults$q_norm,q_bulk=defaults$q_bulk,q_tail=defaults$q_tail,
