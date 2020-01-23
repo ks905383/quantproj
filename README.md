@@ -8,6 +8,9 @@ This package is optimized for speed and allows for file management, batch proces
 
 This package is based on code originally developed by Matz Haugen (@matzhaugen - [original code here](https://github.com/matzhaugen/future-climate-emulations-analysis)) of which segments are used here with permission.
 
+## Installation
+The easiest way to install `quantproj` is to use `install.github()` from the [`devtools`](https://cran.r-project.org/web/packages/devtools/index.html) package. After loading devtools, just run `install.github("ks905383/quantproj")`.
+
 ## Base Code Run
 Do you just want to quickly get started building a distributionally-scaled projection of weather data? Here's the basic code run that will get you there:
 
