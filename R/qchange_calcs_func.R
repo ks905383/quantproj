@@ -44,7 +44,8 @@
 #' @importFrom tictoc tic toc
 #' @importFrom ncdf4 ncdim_def ncvar_def nc_create ncvar_put ncatt_put nc_close
 #' @importFrom abind abind
-
+#' @importFrom splines ns
+#' @importFrom pbs pbs
 
 
 # (I want to add an 'export as grid' function....)
@@ -84,7 +85,7 @@ get.quantile.changes <- function(defaults,
 
   # Calculate change in quantiles
   tic("Quantile changes calculated!")
-  quantile_changes <- lapply(process.inputs,get.quantile.change,
+  quantile_changes <- lapply(process.inputs,get.quantile.changes,
                             year.i=base.years-defaults$base.year.range[1]+1, year.f=future.years-defaults$base.year.range[1]+1,
                             defaults=defaults,
                             bulk.x=bulk.x,tail.x=tail.x,

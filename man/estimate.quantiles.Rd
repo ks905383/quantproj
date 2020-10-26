@@ -90,15 +90,24 @@ saved output of \code{\link{get.process.chunks}}.
 
 \section{On processing efficiency}{
 
-\code{estimate.quantiles} does not explicitly support parallel processing
-\strong{within} the function (various \code{mclapply} instances were tried
-without promising results). \strong{However}, the creation of temporary
-output files at the start of processing and built-in testing for the
-existance of the output files means that this function can be called from
-multiple instances of R (for example in running in batch) without overwriting
-work done by other instances.
+	\code{estimate.quantiles} does not explicitly support parallel processing
+	\strong{within} the function (various \code{mclapply} instances were tried
+	without promising results). \strong{However}, the creation of temporary
+	output files at the start of processing and built-in testing for the
+	existance of the output files means that this function can be called from
+	multiple instances of R (for example in running in batch) without overwriting
+	work done by other instances.
 
-This is the most computationally-intensive step in the
-package.
+	This is the most computationally-intensive step in the
+	package.
+}
+
+\section{WARNING WHEN BOOTSTRAPPING}{
+ 
+The loaded model data is copied \code{nboots} times within this code if 
+\code{defaults$bootstrapping=T}. Make sure to reduce the size of processing
+	chunks when running with bootstrapping turned on to reduce the risk of 
+memory issues... (some future version of this code may have a more 
+sophisticated treatment of this issue)
 }
 
