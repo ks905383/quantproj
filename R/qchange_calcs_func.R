@@ -57,6 +57,78 @@ get.quantile.changes <- function(defaults,
                              base.years,future.years,
                              load.fn=character()) {
 
+  get.quantile.change <- function(process.inputs.tmp, year.i, year.f,
+                                  defaults,
+                                  bulk.x,tail.x,norm.x=numeric(),
+                                  params,params.lats,params.lons) {
+    print(paste0("Processing region ",process.inputs.tmp$reg,", ",length(process.inputs.tmp$lon)," pixel(s) with lat=",round(process.inputs.tmp$lat,2)))
+    out.list <- tryCatch({
+      ## Load normalizing basis function (the only one that's lat-dependent)
+      # Get lats from the volcanic data to pick right basis file (if not already inputted)
+      if (defaults$get.volc||length(norm.x)==0) {
+          norm.x <- get.predictors(n_files=1, df.x=defaults$norm.x.df[1], df.t=defaults$norm.x.df[2], df.xt=defaults$norm.x.df[3],
+            year.range=params[[1]]$year.range,get.volc=defaults$get.volc,lat=process.inputs.tmp$lat)
+      }
+
+      # Figure out which locations to process (this is to skip over lat-lon duplicates,
+      # which might exist. Basically, for every location in the [process.inputs]
+      # directory, we find the first [params] list element, by matching lat and lon)
+      param.idxs <- unlist(lapply(1:length(process.inputs.tmp$lon),function(x) which(params.lats==process.inputs.tmp$lat&params.lons==process.inputs.tmp$lon[x])[1]));
+      # Remove NULLs, which sometimes show up (possibly fixed)
+      if (any(unlist(lapply(params[param.idxs],is.null)))) {
+        print('NULLs Found')
+        param.idxs <- param.idxs[!unlist(lapply(params[param.idxs],is.null))]
+      }
+
+      # Get the quantiles
+      yqhats_real <- abind(lapply(params[param.idxs],make.quantile.surfaces,bulk.x=bulk.x,tail.x=tail.x,norm.x=norm.x),along=4)
+
+      # Set future and present values to compare (R automatically "squeezes"
+      # interior singleton dimensions, so to avoid the dimensions getting
+      # messed up, the statements below are separated)
+      if (length(year.f)==1) {
+        # If just a single year, just get that year
+        q.f <- yqhats_real[,year.f,,]
+      } else if (dim(yqhats_real)[4]==1) {
+        # If just a single pixel, get the mean across years for that pixel
+        q.f <- colMeans(aperm(yqhats_real[,year.f,,],c(2,1,3)))
+      } else {
+        # If multiple pixels, get the mean across years for the multiple pixels
+        q.f <- colMeans(aperm(yqhats_real[,year.f,,],c(2,1,3,4)))
+      }
+
+      if (length(year.i)==1) {
+        # If just a single year, just get that year
+        q.i <- yqhats_real[,year.i,,]
+      } else if (dim(yqhats_real)[4]==1) {
+        # If just a single pixel, get the mean across years for that pixel
+        q.i <- colMeans(aperm(yqhats_real[,year.i,,],c(2,1,3)))
+      } else {
+        # If multiple pixels, get the mean across years for the multiple pixels
+        q.i <- colMeans(aperm(yqhats_real[,year.i,,],c(2,1,3,4)))
+      }
+
+      # Get quantile change
+      qchg <- q.f - q.i
+      attr(qchg,"dimnames") <- NULL
+
+      # Return a list of the location and the quantile change for the pixels in
+      # this latitude-by-region subset
+      return(list(lat=unlist(lapply(params[param.idxs],function(x) x$lat)),
+                  lon=unlist(lapply(params[param.idxs],function(x) x$lon)),
+                  qchg=qchg))
+    }, error=function(e) {
+      warning(paste0("issue with ",process.inputs.tmp$reg,", lat=",process.inputs.tmp$lat))
+      # Return a list of the location and the quantile change for the pixels in
+      # this latitude-by-region subset
+      return(list(lat=unlist(lapply(params[param.idxs],function(x) x$lat)),
+                  lon=unlist(lapply(params[param.idxs],function(x) x$lon)),
+                  qchg=array(NA,c(365,length(params[[param.idxs[1]]]$q_all),length(process.inputs.tmp$lon)))))
+    })
+
+    return(out.list)
+  }
+
   # Load fit params and lat-reg-subsets
   if (length(load.fn)==0) {
     load(paste0(defaults$mod.data.dir,"params/",defaults$filevar,"_day_",defaults$mod.name,"_quantfit_params_",paste0(defaults$mod.year.range,collapse="-"),"_alllocs.RData"))
@@ -85,7 +157,7 @@ get.quantile.changes <- function(defaults,
 
   # Calculate change in quantiles
   tic("Quantile changes calculated!")
-  quantile_changes <- lapply(process.inputs,get.quantile.changes,
+  quantile_changes <- lapply(process.inputs,get.quantile.change,
                             year.i=base.years-defaults$base.year.range[1]+1, year.f=future.years-defaults$base.year.range[1]+1,
                             defaults=defaults,
                             bulk.x=bulk.x,tail.x=tail.x,
@@ -200,78 +272,6 @@ get.quantile.changes <- function(defaults,
     }
     # close the file, writing data to disk
     nc_close(ncout)
-  }
-
-  get.quantile.change <- function(process.inputs.tmp, year.i, year.f,
-                                  defaults,
-                                  bulk.x,tail.x,norm.x=numeric(),
-                                  params,params.lats,params.lons) {
-    print(paste0("Processing region ",process.inputs.tmp$reg,", ",length(process.inputs.tmp$lon)," pixel(s) with lat=",round(process.inputs.tmp$lat,2)))
-    out.list <- tryCatch({
-      ## Load normalizing basis function (the only one that's lat-dependent)
-      # Get lats from the volcanic data to pick right basis file (if not already inputted)
-      if (defaults$get.volc||length(norm.x)==0) {
-          norm.x <- get.predictors(n_files=1, df.x=defaults$norm.x.df[1], df.t=defaults$norm.x.df[2], df.xt=defaults$norm.x.df[3],
-            year.range=params[[1]]$year.range,get.volc=defaults$get.volc,lat=process.inputs.tmp$lat)
-      }
-
-      # Figure out which locations to process (this is to skip over lat-lon duplicates,
-      # which might exist. Basically, for every location in the [process.inputs]
-      # directory, we find the first [params] list element, by matching lat and lon)
-      param.idxs <- unlist(lapply(1:length(process.inputs.tmp$lon),function(x) which(params.lats==process.inputs.tmp$lat&params.lons==process.inputs.tmp$lon[x])[1]));
-      # Remove NULLs, which sometimes show up (possibly fixed)
-      if (any(unlist(lapply(params[param.idxs],is.null)))) {
-        print('NULLs Found')
-        param.idxs <- param.idxs[!unlist(lapply(params[param.idxs],is.null))]
-      }
-
-      # Get the quantiles
-      yqhats_real <- abind(lapply(params[param.idxs],make.quantile.surfaces,bulk.x=bulk.x,tail.x=tail.x,norm.x=norm.x),along=4)
-
-      # Set future and present values to compare (R automatically "squeezes"
-      # interior singleton dimensions, so to avoid the dimensions getting
-      # messed up, the statements below are separated)
-      if (length(year.f)==1) {
-        # If just a single year, just get that year
-        q.f <- yqhats_real[,year.f,,]
-      } else if (dim(yqhats_real)[4]==1) {
-        # If just a single pixel, get the mean across years for that pixel
-        q.f <- colMeans(aperm(yqhats_real[,year.f,,],c(2,1,3)))
-      } else {
-        # If multiple pixels, get the mean across years for the multiple pixels
-        q.f <- colMeans(aperm(yqhats_real[,year.f,,],c(2,1,3,4)))
-      }
-
-      if (length(year.i)==1) {
-        # If just a single year, just get that year
-        q.i <- yqhats_real[,year.i,,]
-      } else if (dim(yqhats_real)[4]==1) {
-        # If just a single pixel, get the mean across years for that pixel
-        q.i <- colMeans(aperm(yqhats_real[,year.i,,],c(2,1,3)))
-      } else {
-        # If multiple pixels, get the mean across years for the multiple pixels
-        q.i <- colMeans(aperm(yqhats_real[,year.i,,],c(2,1,3,4)))
-      }
-
-      # Get quantile change
-      qchg <- q.f - q.i
-      attr(qchg,"dimnames") <- NULL
-
-      # Return a list of the location and the quantile change for the pixels in
-      # this latitude-by-region subset
-      return(list(lat=unlist(lapply(params[param.idxs],function(x) x$lat)),
-                  lon=unlist(lapply(params[param.idxs],function(x) x$lon)),
-                  qchg=qchg))
-    }, error=function(e) {
-      warning(paste0("issue with ",process.inputs.tmp$reg,", lat=",process.inputs.tmp$lat))
-      # Return a list of the location and the quantile change for the pixels in
-      # this latitude-by-region subset
-      return(list(lat=unlist(lapply(params[param.idxs],function(x) x$lat)),
-                  lon=unlist(lapply(params[param.idxs],function(x) x$lon)),
-                  qchg=array(NA,c(365,length(params[[param.idxs[1]]]$q_all),length(process.inputs.tmp$lon)))))
-    })
-
-    return(out.list)
   }
 
 
